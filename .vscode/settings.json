@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/84945721-c6da-4c35-8ac8-7fb38005df05/resourceGroups/copilot-survey-engine/providers/Microsoft.Web/sites/copilot-surveys",
+    "appService.deploySubpath": "."
+}
