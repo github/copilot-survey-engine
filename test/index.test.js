@@ -28,6 +28,7 @@ describe("My Probot app", () => {
 
   beforeEach(() => {
     nock.disableNetConnect();
+    nock.enableNetConnect('ghazlanguage.cognitiveservices.azure.com');
     probot = new Probot({
       appId: 123,
       privateKey,

@@ -6,8 +6,10 @@
 const dedent = require('dedent');
 const fs = require('fs');
 const path = require("path");
+require('dotenv').config();
 
-const issue_body = fs.readFileSync('./issue_template/copilot-usage-spa.md', 'utf-8');
+const { TextAnalysisClient, AzureKeyCredential } = require("@azure/ai-language-text");
+const { KEY, ENDPOINT } = process.env;
 
 module.exports = (app) => {
   // Your code here
@@ -15,6 +17,14 @@ module.exports = (app) => {
 
   app.on("pull_request.closed", async (context) => {
     let pr_number = context.payload.pull_request.number;
+    let pr_body = context.payload.pull_request.body;
+    
+    // check language for pr_body
+    const client = new TextAnalysisClient(ENDPOINT, new AzureKeyCredential(KEY));
+    const result = await client.analyze("LanguageDetection", [pr_body]);
+
+    // read file that aligns with detected language 
+    const issue_body = fs.readFileSync('./issue_template/copilot-usage-'+result[0].primaryLanguage.iso6391Name+'.md', 'utf-8');
 
     // find XXX in file and replace with pr_number
     let fileContent = dedent(issue_body.replace(/XXX/g, '#'+pr_number.toString()) );
