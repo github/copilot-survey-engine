@@ -3,10 +3,20 @@ const nock = require("nock");
 const myProbotApp = require("..");
 const { Probot, ProbotOctokit } = require("probot");
 // Requiring our fixtures
-const payload = require("./fixtures/issues.opened");
+const payload = require("./fixtures/pull_request.closed.json");
 const issueCreatedBody = { body: "Thanks for opening this issue!" };
 const fs = require("fs");
 const path = require("path");
+
+const issue_body = fs.readFileSync(
+  path.join(__dirname, "fixtures/issue_body.md"),
+  'utf-8'
+);
+
+const expected_issue = {
+  title: "Copilot Usage",
+  body: issue_body,
+}
 
 const privateKey = fs.readFileSync(
   path.join(__dirname, "fixtures/mock-cert.pem"),
@@ -31,10 +41,10 @@ describe("My Probot app", () => {
     probot.load(myProbotApp);
   });
 
-  test("creates a comment when an issue is opened", async () => {
+  test("creates an issue when a Pull Request is closed", async () => {
     const mock = nock("https://api.github.com")
       // Test that we correctly return a test token
-      .post("/app/installations/2/access_tokens")
+      .post("/app/installations/35217443/access_tokens")
       .reply(200, {
         token: "test",
         permissions: {
@@ -43,14 +53,14 @@ describe("My Probot app", () => {
       })
 
       // Test that a comment is posted
-      .post("/repos/hiimbex/testing-things/issues/1/comments", (body) => {
-        expect(body).toMatchObject(issueCreatedBody);
+      .post("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues", (body) => {
+        expect(body).toMatchObject(expected_issue);
         return true;
       })
       .reply(200);
 
     // Receive a webhook event
-    await probot.receive({ name: "issues", payload });
+    await probot.receive({ name: "pull_request", payload });
 
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
