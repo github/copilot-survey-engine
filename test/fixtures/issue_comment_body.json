@@ -1,0 +1,46 @@
+[
+    {
+      "url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/comments/1475088517",
+      "html_url": "https://github.com/Mageroni-Org/Actions-more-than-CI-CD/issues/62#issuecomment-1475088517",
+      "issue_url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62",
+      "id": 1475088517,
+      "node_id": "IC_kwDOH5NwUM5X7BCF",
+      "user": {
+        "login": "mageroni",
+        "id": 107436170,
+        "node_id": "U_kgDOBmdYig",
+        "avatar_url": "https://avatars.githubusercontent.com/u/107436170?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/mageroni",
+        "html_url": "https://github.com/mageroni",
+        "followers_url": "https://api.github.com/users/mageroni/followers",
+        "following_url": "https://api.github.com/users/mageroni/following{/other_user}",
+        "gists_url": "https://api.github.com/users/mageroni/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/mageroni/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/mageroni/subscriptions",
+        "organizations_url": "https://api.github.com/users/mageroni/orgs",
+        "repos_url": "https://api.github.com/users/mageroni/repos",
+        "events_url": "https://api.github.com/users/mageroni/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/mageroni/received_events",
+        "type": "User",
+        "site_admin": true
+      },
+      "created_at": "2023-03-19T03:36:25Z",
+      "updated_at": "2023-03-19T03:36:25Z",
+      "author_association": "COLLABORATOR",
+      "body": "Comentario especial aqui!!",
+      "reactions": {
+        "url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/comments/1475088517/reactions",
+        "total_count": 0,
+        "+1": 0,
+        "-1": 0,
+        "laugh": 0,
+        "hooray": 0,
+        "confused": 0,
+        "heart": 0,
+        "rocket": 0,
+        "eyes": 0
+      },
+      "performed_via_github_app": null
+    }
+  ]

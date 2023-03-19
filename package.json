@@ -13,10 +13,11 @@
   ],
   "scripts": {
     "start": "probot run ./index.js",
-    "test": "jest"
+    "test": "jest --detectOpenHandles"
   },
   "dependencies": {
     "@azure/ai-language-text": "^1.0.0",
+    "mssql": "^9.1.1",
     "probot": "^12.2.4"
   },
   "devDependencies": {

@@ -3,8 +3,10 @@ const nock = require("nock");
 const myProbotApp = require("..");
 const { Probot, ProbotOctokit } = require("probot");
 // Requiring our fixtures
-const payload = require("./fixtures/pull_request.closed.json");
-const issueCreatedBody = { body: "Thanks for opening this issue!" };
+const payload_pr_closed = require("./fixtures/pull_request.closed.json");
+const payload_issues_edited_positive = require("./fixtures/issues.edited.positive.json");
+const payload_issues_edited_negative = require("./fixtures/issues.edited.negative.json");
+const issue_comment = require("./fixtures/issue_comment_body.json");
 const fs = require("fs");
 const path = require("path");
 
@@ -53,15 +55,61 @@ describe("My Probot app", () => {
         },
       })
 
-      // Test that a comment is posted
+      // Test that a issue is created
       .post("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues", (body) => {
         expect(body).toMatchObject(expected_issue);
+        return issue_comment;
+      })
+      .reply(200);
+
+    // Receive a webhook event
+    await probot.receive({ name: "pull_request", payload : payload_pr_closed });
+
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test("closes an issue after it's been completed - yes and percentage are added", async () => {
+    const mock = nock("https://api.github.com")
+      // Test that we correctly return a test token
+      .post("/app/installations/35217443/access_tokens")
+      .reply(200, {
+        token: "test",
+        permissions: {
+          issues: "write",
+        },
+      })
+
+      .patch("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62", (body) => {
+        expect(body).toMatchObject({state: 'closed'});
         return true;
       })
       .reply(200);
 
     // Receive a webhook event
-    await probot.receive({ name: "pull_request", payload });
+    await probot.receive({ name: "issues", payload : payload_issues_edited_positive });
+
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test("closes an issue after it's been completed - no has been selected", async () => {
+    const mock = nock("https://api.github.com")
+      // Test that we correctly return a test token
+      .post("/app/installations/35217443/access_tokens")
+      .reply(200, {
+        token: "test",
+        permissions: {
+          issues: "write",
+        },
+      })
+
+      .patch("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62", (body) => {
+        expect(body).toMatchObject({state: 'closed'});
+        return true;
+      })
+      .reply(200)
+
+    // Receive a webhook event
+    await probot.receive({ name: "issues", payload : payload_issues_edited_negative });
 
     expect(mock.pendingMocks()).toStrictEqual([]);
   });

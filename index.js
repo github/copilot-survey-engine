@@ -6,10 +6,11 @@
 const dedent = require('dedent');
 const fs = require('fs');
 const path = require("path");
+const sql = require("mssql");
 require('dotenv').config();
 
 const { TextAnalysisClient, AzureKeyCredential } = require("@azure/ai-language-text");
-const { KEY, ENDPOINT } = process.env;
+const { KEY, ENDPOINT, ConnString } = process.env;
 
 module.exports = (app) => {
   // Your code here
@@ -38,8 +39,108 @@ module.exports = (app) => {
       repo: context.payload.repository.name,
       title: "Copilot Usage",
       body: fileContent,
+      assignee: context.payload.pull_request.user.login,
     });
   });
+
+  app.on("issues.edited", async (context) => {
+    if(context.payload.issue.title === "Copilot Usage"){
+      let issue_body = context.payload.issue.body;
+      let issue_id = context.payload.issue.id;
+
+      // find regex [0-9]\+ in issue_body and get first result
+      let pr_number = issue_body.match(/[0-9]+/)[0];
+
+      // find regex \[x\] in issue_body and get complete line in an array
+      let checkboxes = issue_body.match(/\[x\].*/g);
+
+      // find if checkboxes array contains Sim o Si or Yes
+      let isCopilotUsed = checkboxes.some((checkbox) => {
+        return checkbox.includes("Sim") || checkbox.includes("Si") || checkbox.includes("Yes");
+      });
+
+      if(isCopilotUsed){
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null);
+
+        // loop through checkboxes and find the one that contains %
+        let pctSelected = false;
+        let pctValue = new Array();
+        for (const checkbox of checkboxes) {
+          if(checkbox.includes("%")){
+            pctSelected = true;
+            copilotPercentage = checkbox;
+            copilotPercentage = copilotPercentage.replace(/\[x\] /g, '');
+            pctValue.push(copilotPercentage);
+            app.log.info(copilotPercentage);
+          }
+        }
+        if(pctSelected){
+          // save into sql atabase with connstring
+
+          await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null);
+
+          // close the issue
+          await context.octokit.issues.update({
+            owner: context.payload.repository.owner.login,
+            repo: context.payload.repository.name,
+            issue_number: context.payload.issue.number,
+            state: "closed"
+          });
+        }
+      }else{
+        if (checkboxes.some((checkbox) => {
+          return checkbox.includes("Não") || checkbox.includes("No"); })){
+
+          await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null);
+        }
+      }
+    }
+  });
+
+  app.on("issue_comment.created", async (context) => {
+    if(context.payload.issue.title === "Copilot Usage"){
+      
+    }
+  });
+
+  async function insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, comment){
+    let conn = null;
+    try{
+      conn = await sql.connect(ConnString);
+
+      let result = await sql.query`SELECT * FROM SurveyResults WHERE issue_id = ${issue_id}`;
+
+      // convert pctValue to string
+      if(pctValue){
+        pctValue = pctValue.toString();
+      }
+
+      if(result.recordset.length > 0){
+        // update existing record
+        let update_result = await sql.query`UPDATE SurveyResults SET PR_number = ${pr_number}, Value_detected = ${isCopilotUsed}, Value_percentage = ${pctValue}, Value_ndetected_reason = ${comment} WHERE issue_id = ${issue_id}`;
+        app.log.info(update_result);
+      }else {
+        // check if enterprise is present in context.payload
+        let enterprise_name = null;
+        let assignee_name = null;
+        if(context.payload.enterprise){
+          enterprise_name = context.payload.enterprise.name;
+        }
+        if(context.payload.issue.assignee){
+          assignee_name = context.payload.issue.assignee.login;
+        }
+        
+        let insert_result = await sql.query`INSERT INTO SurveyResults VALUES(${enterprise_name}, ${context.payload.repository.owner.login}, ${context.payload.repository.name}, ${context.payload.issue.id}, ${context.payload.issue.number}, ${pr_number}, ${assignee_name}, ${isCopilotUsed}, ${pctValue}, ${comment}, ${context.payload.issue.created_at}, ${context.payload.issue.updated_at})`;
+        app.log.info(insert_result);
+      }
+    }catch(err){
+      app.log.error(err);
+    }finally{
+      if(conn){
+        conn.close();
+      }
+    }
+  }
 
   // For more information on building apps:
   // https://probot.github.io/docs/
