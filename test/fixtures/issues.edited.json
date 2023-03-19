@@ -12,7 +12,7 @@
       "author_association": "NONE",
       "body": "### Encuesta sobre el uso de Copilot\n\nHey! 👋  Como parte de nuestros esfuerzos por mejorar continuamente nuestros procesos de DevOps, nos gustaría recopilar sus valiosos comentarios sobre su experiencia con Copilot para el Pull Request #37 a través de las siguientes preguntas:\n\n1. ¿Copilot ahorró tiempo o aumentó la productividad en el desarrollo de este componente?\n- [x] Si\n- [ ] No\n2. Si la respuesta 1 es Si, ¿De cuánto fue la mejora (5 %, 10 %, 20 %, 30 % o más)? \n- [x] <5%\n- [ ] 5%-10%\n- [ ] 10%-20%\n- [ ] 20%-30%\n- [ ] >30%\n4. Si la respuesta 1 es No, Explique por qué en un comentario",
       "closed_at": "2023-03-19T01:12:10Z",
-      "comments": 1,
+      "comments": 0,
       "comments_url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62/comments",
       "created_at": "2023-03-18T22:00:34Z",
       "events_url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62/events",

@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require("path");
 const sql = require("mssql");
 require('dotenv').config();
+let comment = null;
 
 const { TextAnalysisClient, AzureKeyCredential } = require("@azure/ai-language-text");
 const { KEY, ENDPOINT, ConnString } = process.env;
@@ -45,40 +46,71 @@ module.exports = (app) => {
 
   app.on("issues.edited", async (context) => {
     if(context.payload.issue.title === "Copilot Usage"){
-      let issue_body = context.payload.issue.body;
-      let issue_id = context.payload.issue.id;
+      await GetSurveyData(context);
+    }
+  });
 
-      // find regex [0-9]\+ in issue_body and get first result
-      let pr_number = issue_body.match(/[0-9]+/)[0];
+  app.on("issue_comment.created", async (context) => {
+    if(context.payload.issue.title === "Copilot Usage"){
+      comment = context.payload.comment.body;
+      await GetSurveyData(context);
+    }
+  });
 
-      // find regex \[x\] in issue_body and get complete line in an array
-      let checkboxes = issue_body.match(/\[x\].*/g);
+  async function GetSurveyData(context){
+    let issue_body = context.payload.issue.body;
+    let issue_id = context.payload.issue.id;
 
-      // find if checkboxes array contains Sim o Si or Yes
-      let isCopilotUsed = checkboxes.some((checkbox) => {
-        return checkbox.includes("Sim") || checkbox.includes("Si") || checkbox.includes("Yes");
-      });
+    // find regex [0-9]\+ in issue_body and get first result
+    let pr_number = issue_body.match(/[0-9]+/)[0];
 
-      if(isCopilotUsed){
-        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null);
+    // find regex \[x\] in issue_body and get complete line in an array
+    let checkboxes = issue_body.match(/\[x\].*/g);
 
-        // loop through checkboxes and find the one that contains %
-        let pctSelected = false;
-        let pctValue = new Array();
-        for (const checkbox of checkboxes) {
-          if(checkbox.includes("%")){
-            pctSelected = true;
-            copilotPercentage = checkbox;
-            copilotPercentage = copilotPercentage.replace(/\[x\] /g, '');
-            pctValue.push(copilotPercentage);
-            app.log.info(copilotPercentage);
-          }
+    // find if checkboxes array contains Sim o Si or Yes
+    let isCopilotUsed = checkboxes.some((checkbox) => {
+      return checkbox.includes("Sim") || checkbox.includes("Si") || checkbox.includes("Yes");
+    });
+
+    if(comment){
+      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+    }
+
+    if(isCopilotUsed){
+      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+
+      // loop through checkboxes and find the one that contains %
+      let pctSelected = false;
+      let pctValue = new Array();
+      for (const checkbox of checkboxes) {
+        if(checkbox.includes("%")){
+          pctSelected = true;
+          copilotPercentage = checkbox;
+          copilotPercentage = copilotPercentage.replace(/\[x\] /g, '');
+          pctValue.push(copilotPercentage);
+          app.log.info(copilotPercentage);
         }
-        if(pctSelected){
-          // save into sql atabase with connstring
+      }
+      if(pctSelected){
+        // save into sql atabase with connstring
 
-          await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null);
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue);
 
+        // close the issue
+        await context.octokit.issues.update({
+          owner: context.payload.repository.owner.login,
+          repo: context.payload.repository.name,
+          issue_number: context.payload.issue.number,
+          state: "closed"
+        });
+      }
+    }else{
+      if (checkboxes.some((checkbox) => {
+        return checkbox.includes("Não") || checkbox.includes("No"); })){
+
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+
+        if(comment){
           // close the issue
           await context.octokit.issues.update({
             owner: context.payload.repository.owner.login,
@@ -87,23 +119,11 @@ module.exports = (app) => {
             state: "closed"
           });
         }
-      }else{
-        if (checkboxes.some((checkbox) => {
-          return checkbox.includes("Não") || checkbox.includes("No"); })){
-
-          await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null);
-        }
       }
     }
-  });
+  }
 
-  app.on("issue_comment.created", async (context) => {
-    if(context.payload.issue.title === "Copilot Usage"){
-      
-    }
-  });
-
-  async function insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, comment){
+  async function insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue){
     let conn = null;
     try{
       conn = await sql.connect(ConnString);

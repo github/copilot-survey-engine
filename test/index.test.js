@@ -4,9 +4,8 @@ const myProbotApp = require("..");
 const { Probot, ProbotOctokit } = require("probot");
 // Requiring our fixtures
 const payload_pr_closed = require("./fixtures/pull_request.closed.json");
-const payload_issues_edited_positive = require("./fixtures/issues.edited.positive.json");
-const payload_issues_edited_negative = require("./fixtures/issues.edited.negative.json");
-const issue_comment = require("./fixtures/issue_comment_body.json");
+const payload_issues_edited = require("./fixtures/issues.edited.json");
+const issue_comment_created = require("./fixtures/issue_comment.created.json");
 const fs = require("fs");
 const path = require("path");
 
@@ -58,7 +57,7 @@ describe("My Probot app", () => {
       // Test that a issue is created
       .post("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues", (body) => {
         expect(body).toMatchObject(expected_issue);
-        return issue_comment;
+        return true;
       })
       .reply(200);
 
@@ -86,12 +85,12 @@ describe("My Probot app", () => {
       .reply(200);
 
     // Receive a webhook event
-    await probot.receive({ name: "issues", payload : payload_issues_edited_positive });
+    await probot.receive({ name: "issues", payload : payload_issues_edited });
 
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
-  test("closes an issue after it's been completed - no has been selected", async () => {
+  test("closes an issue if a comment is received", async () => {
     const mock = nock("https://api.github.com")
       // Test that we correctly return a test token
       .post("/app/installations/35217443/access_tokens")
@@ -102,14 +101,14 @@ describe("My Probot app", () => {
         },
       })
 
-      .patch("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62", (body) => {
+      .patch("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/60", (body) => {
         expect(body).toMatchObject({state: 'closed'});
         return true;
       })
-      .reply(200)
+      .reply(200);
 
     // Receive a webhook event
-    await probot.receive({ name: "issues", payload : payload_issues_edited_negative });
+    await probot.receive({ name: "issue_comment", payload : issue_comment_created });
 
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
