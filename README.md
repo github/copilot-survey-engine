@@ -16,18 +16,20 @@ The App listens on 3 main events: Pull Request closed, issue edited and issue co
 
 Once the issue is created, the following questions are presented to the developer:
 
-Hi! 👋 As part of our efforts to continually improve our DevOps processes, we would like to gather your valuable feedback on your experience with Copilot for Pull Request #XXX by asking the following questions:
+### Copilot Usage Survey
 
-Did Copilot save time or increase productivity in developing this component?
- Yes
- No
-If answer 1 is Yes, how much was the improvement (5%, 10%, 20%, 30% or more)?
- <5%
- 5%-10%
- 10%-20%
- 20%-30%
- >30%
-If answer 1 is No, please explain why in a comment
+Hi! 👋  As part of our efforts to continually improve our DevOps processes, we would like to gather your valuable feedback on your experience with Copilot for Pull Request #26 by asking the following questions:
+
+1. Did Copilot save time or increase productivity in developing this component?
+- Yes
+- No
+2. If answer 1 is Yes, how much was the improvement (5%, 10%, 20%, 30% or more)?
+- <5%
+- 5%-10%
+- 10%-20%
+- 20%-30%
+- \>30%
+4. If answer 1 is No, please explain why in a comment
 
 As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. A report could be connected to this aplication or you can even decide to host your own your database!
 
