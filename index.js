@@ -41,6 +41,7 @@ module.exports = (app) => {
       title: "Copilot Usage",
       body: fileContent,
       assignee: context.payload.pull_request.user.login,
+      label: "question"
     });
   });
 
@@ -54,6 +55,7 @@ module.exports = (app) => {
     if(context.payload.issue.title === "Copilot Usage"){
       comment = context.payload.comment.body;
       await GetSurveyData(context);
+      comment = null;
     }
   });
 

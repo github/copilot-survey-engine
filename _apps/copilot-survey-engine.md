@@ -1,3 +1,21 @@
+---
+# A human-friendly name of your listing
+title: Copilot Survey Engine
+# A short description of what your app does
+description: This is an engine that will prompt developers on their perception of the use of Copilot.
+# The slug of your hosted app on GitHub (https://github.com/apps/YOUR-SLUG)
+slug: copilot-survey-engine
+# Include a few screenshots that show your app in action
+screenshots:
+- https://copilotsurveyenginedocs.blob.core.windows.net/docs/Copilot Usage Screenshot.png
+# The GitHub usernames of anyone who authored the app
+authors: [ mageroni ]
+# The repository where the code is located
+repository: Mageroni-Org/copilot-survey-engine
+# The address where this app is deployed
+host: copilot-surveys.azurewebsites.net
+---
+
 # copilot-survey-engine
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) that Engine to prompt developers about their experience with Copilot!
