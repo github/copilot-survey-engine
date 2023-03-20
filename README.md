@@ -37,7 +37,7 @@ As we receive edits on the issue, the App will validate the responses received (
 
 ## Setup. To use as-is
 
-You only need to install this App on your Org/Repos
+You only need to install this App on your Org/Repos. [Install it here!](https://github.com/apps/copilot-survey-engine/installations/new)
 
 ## Setup. To deploy on your own environment
 
@@ -49,7 +49,7 @@ npm install
 npm start
 ```
 
-As a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete that information a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. 
+Once you clone the project and execute this commands locally, as a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. You could then modify the deployment settings to deploy the app in the infrastructure of your liking and connect it to your desired database. 
 
 ## Docker
 
