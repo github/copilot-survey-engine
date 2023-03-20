@@ -33,7 +33,7 @@ Hi! 👋  As part of our efforts to continually improve our DevOps processes, we
 - \>30%
 4. If answer 1 is No, please explain why in a comment
 
-As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. A report could be connected to this aplication or you can even decide to host your own your database!
+As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. A report could be connected to this aplication (please talk to your GitHub contact in order to have the connection string for the database) or you can even decide to host your own your database!
 
 ## Setup. To use as-is
 
