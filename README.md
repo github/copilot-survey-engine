@@ -2,7 +2,7 @@
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) to prompt developers about their experience with Copilot!
 
-[Install it here!]([http://www.google.com](https://github.com/apps/copilot-survey-engine/installations/new))
+[Install it here!](https://github.com/apps/copilot-survey-engine/installations/new)
 
 ## App Objective
 
