@@ -23,8 +23,14 @@ module.exports = (app) => {
     
     // check language for pr_body
     const client = new TextAnalysisClient(ENDPOINT, new AzureKeyCredential(KEY));
-    const result = await client.analyze("LanguageDetection", [pr_body]);
-
+    const result = [{primaryLanguage: {iso6391Name: 'en'}}];
+    if(pr_body){
+      result = await client.analyze("LanguageDetection", [pr_body]);
+      if(!['en', 'es', 'pt'].includes(result[0].primaryLanguage.iso6391Name)){
+        result[0].primaryLanguage.iso6391Name = 'en';
+      }
+    }
+    
     // read file that aligns with detected language 
     const issue_body = fs.readFileSync('./issue_template/copilot-usage-'+result[0].primaryLanguage.iso6391Name+'.md', 'utf-8');
 
