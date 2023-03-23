@@ -17,17 +17,30 @@ module.exports = (app) => {
   // Your code here
   app.log.info("Yay, the app was loaded!");
 
+  let appInsights = require('applicationinsights');
+  appInsights.setup().start();
+  let appIClient = appInsights.defaultClient;
+
   app.on("pull_request.closed", async (context) => {
+    appIClient.trackEvent({name: "Pull Request Close Payload", properties: context.payload});
     let pr_number = context.payload.pull_request.number;
     let pr_body = context.payload.pull_request.body;
     
     // check language for pr_body
-    const client = new TextAnalysisClient(ENDPOINT, new AzureKeyCredential(KEY));
+    const TAclient = new TextAnalysisClient(ENDPOINT, new AzureKeyCredential(KEY));
     let result = [{primaryLanguage: {iso6391Name: 'en'}}];
     if(pr_body){
-      result = await client.analyze("LanguageDetection", [pr_body]);
-      if(!['en', 'es', 'pt'].includes(result[0].primaryLanguage.iso6391Name)){
-        result[0].primaryLanguage.iso6391Name = 'en';
+      try{
+        let startTime = Date.now();
+        result = await TAclient.analyze("LanguageDetection", [pr_body]);
+        let duration = Date.now() - startTime;
+        appIClient.trackDependency({target:"API:Language Detection", name:"get pull request language", duration:duration, resultCode:0, success: true, dependencyTypeName: "HTTP"});
+        if(!['en', 'es', 'pt'].includes(result[0].primaryLanguage.iso6391Name)){
+          result[0].primaryLanguage.iso6391Name = 'en';
+        }
+      }catch(err){
+        app.log.error(err);
+        appIClient.trackException({exception: err});
       }
     }
     
@@ -41,23 +54,30 @@ module.exports = (app) => {
     app.log.info(fileContent);
 
     // create an issue using fileContent as body
-    await context.octokit.issues.create({
-      owner: context.payload.repository.owner.login,
-      repo: context.payload.repository.name,
-      title: "Copilot Usage",
-      body: fileContent,
-      assignee: context.payload.pull_request.user.login
-    });
+    try{
+      await context.octokit.issues.create({
+        owner: context.payload.repository.owner.login,
+        repo: context.payload.repository.name,
+        title: "Copilot Usage",
+        body: fileContent,
+        assignee: context.payload.pull_request.user.login
+      });
+    }catch(err){
+      app.log.error(err);
+      appIClient.trackException({exception: err});
+    }
   });
 
   app.on("issues.edited", async (context) => {
     if(context.payload.issue.title === "Copilot Usage"){
+      appIClient.trackEvent({name: "Issue Edited Payload", properties: context.payload});
       await GetSurveyData(context);
     }
   });
 
   app.on("issue_comment.created", async (context) => {
     if(context.payload.issue.title === "Copilot Usage"){
+      appIClient.trackEvent({name: "Issue Comment Created Payload", properties: context.payload});
       comment = context.payload.comment.body;
       await GetSurveyData(context);
       comment = null;
@@ -80,11 +100,17 @@ module.exports = (app) => {
     });
 
     if(comment){
+      let startTime = Date.now();
       await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+      let duration = Date.now() - startTime;
+      appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when comment is present", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
     }
 
     if(isCopilotUsed){
+      let startTime = Date.now();
       await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+      let duration = Date.now() - startTime;
+      appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when Yes is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
 
       // loop through checkboxes and find the one that contains %
       let pctSelected = false;
@@ -101,30 +127,47 @@ module.exports = (app) => {
       if(pctSelected){
         // save into sql atabase with connstring
 
+        let startTime = Date.now();
         await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue);
+        let duration = Date.now() - startTime;
+        appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when pct is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
 
         // close the issue
-        await context.octokit.issues.update({
-          owner: context.payload.repository.owner.login,
-          repo: context.payload.repository.name,
-          issue_number: context.payload.issue.number,
-          state: "closed"
-        });
-      }
-    }else{
-      if (checkboxes.some((checkbox) => {
-        return checkbox.includes("Não") || checkbox.includes("No"); })){
-
-        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
-
-        if(comment){
-          // close the issue
+        try{
           await context.octokit.issues.update({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
             issue_number: context.payload.issue.number,
             state: "closed"
           });
+        }
+        catch(err){
+          app.log.error(err);
+          appIClient.trackException({exception: err});
+        }
+      }
+    }else{
+      if (checkboxes.some((checkbox) => {
+        return checkbox.includes("Não") || checkbox.includes("No"); })){
+
+        let startTime = Date.now();
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+        let duration = Date.now() - startTime;
+        appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when No is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
+
+        if(comment){
+          try{
+            // close the issue
+            await context.octokit.issues.update({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              issue_number: context.payload.issue.number,
+              state: "closed"
+            });
+          }catch(err){
+            app.log.error(err);
+            appIClient.trackException({exception: err});
+          }
         }
       }
     }
@@ -162,6 +205,7 @@ module.exports = (app) => {
       }
     }catch(err){
       app.log.error(err);
+      appIClient.trackException({exception: err});
     }finally{
       if(conn){
         conn.close();
