@@ -5,7 +5,7 @@
     "url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/pulls/44",
     "id": 1280983238,
     "number": 44,
-    "body":"Este es un pull request de prueba para ver si en realidad se esta detectando el lenguaje",
+    "body":"This is a test pull request to see if language is being detected",
     "state": "closed",
     "user": {
       "login": "mageroni"

@@ -23,7 +23,7 @@ module.exports = (app) => {
     
     // check language for pr_body
     const client = new TextAnalysisClient(ENDPOINT, new AzureKeyCredential(KEY));
-    const result = [{primaryLanguage: {iso6391Name: 'en'}}];
+    let result = [{primaryLanguage: {iso6391Name: 'en'}}];
     if(pr_body){
       result = await client.analyze("LanguageDetection", [pr_body]);
       if(!['en', 'es', 'pt'].includes(result[0].primaryLanguage.iso6391Name)){
@@ -46,8 +46,7 @@ module.exports = (app) => {
       repo: context.payload.repository.name,
       title: "Copilot Usage",
       body: fileContent,
-      assignee: context.payload.pull_request.user.login,
-      label: "question"
+      assignee: context.payload.pull_request.user.login
     });
   });
 
