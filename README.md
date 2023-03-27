@@ -35,11 +35,14 @@ Hi! 👋  As part of our efforts to continually improve our DevOps processes, we
 
 As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. A report could be connected to this aplication (please talk to your GitHub contact in order to have the connection string for the database) or you can even decide to host your own your database!
 
-## Setup. To use as-is
+Still not getting it? Look at this cool gif!!
+![GitHubSurveyEngine](https://user-images.githubusercontent.com/107436170/228025281-d70d13dc-8403-4993-8bdc-cd665279986b.gif)
+
+## Setup. Opiton 1. To use as-is
 
 You only need to install this App on your Org/Repos. [Install it here!](https://github.com/apps/copilot-survey-engine/installations/new)
 
-## Setup. To deploy on your own environment
+## Setup. Option 2. To deploy on your own environment
 
 ```sh
 # Install dependencies
@@ -51,7 +54,7 @@ npm start
 
 Once you clone the project and execute this commands locally, as a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. You could then modify the deployment settings to deploy the app in the infrastructure of your liking and connect it to your desired database. 
 
-## Docker
+## When running in Docker
 
 ```sh
 # 1. Build container
