@@ -96,7 +96,7 @@ module.exports = (app) => {
 
     // find if checkboxes array contains Sim o Si or Yes
     let isCopilotUsed = checkboxes.some((checkbox) => {
-      return checkbox.includes("Sim") || checkbox.includes("Si") || checkbox.includes("Yes");
+      return checkbox.includes("Sim") || checkbox.includes("Si") || checkbox.includes("Yes") || checkbox.includes("Oui");
     });
 
     if(comment){
@@ -148,7 +148,7 @@ module.exports = (app) => {
       }
     }else{
       if (checkboxes.some((checkbox) => {
-        return checkbox.includes("Não") || checkbox.includes("No"); })){
+        return checkbox.includes("Não") || checkbox.includes("No") || checkbox.includes("Non"); })){
 
         let startTime = Date.now();
         await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
@@ -187,7 +187,7 @@ module.exports = (app) => {
 
       if(result.recordset.length > 0){
         // update existing record
-        let update_result = await sql.query`UPDATE SurveyResults SET PR_number = ${pr_number}, Value_detected = ${isCopilotUsed}, Value_percentage = ${pctValue}, Value_ndetected_reason = ${comment} WHERE issue_id = ${issue_id}`;
+        let update_result = await sql.query`UPDATE SurveyResults SET PR_number = ${pr_number}, Value_detected = ${isCopilotUsed}, Value_percentage = ${pctValue}, Value_ndetected_reason = ${comment}, 	completed_at = ${context.payload.issue.updated_at} WHERE issue_id = ${issue_id}`;
         app.log.info(update_result);
       }else {
         // check if enterprise is present in context.payload
