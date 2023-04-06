@@ -11,4 +11,4 @@ Ei! 👋  Como parte de nossos esforços para melhorar continuamente nossos proc
 - [ ] 10%-20%
 - [ ] 20%-30%
 - [ ] >30%
-4. Se a resposta 1 for Não, explique por que em um comentário
+3. Se a resposta 1 for Não, explique por que em um comentário

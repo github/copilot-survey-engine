@@ -11,4 +11,4 @@ Hey! 👋  Como parte de nuestros esfuerzos por mejorar continuamente nuestros p
 - [ ] 10%-20%
 - [ ] 20%-30%
 - [ ] >30%
-4. Si la respuesta 1 es No, Explique por qué en un comentario
+3. Si la respuesta 1 es No, Explique por qué en un comentario

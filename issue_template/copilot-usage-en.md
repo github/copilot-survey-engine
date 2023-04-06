@@ -11,4 +11,4 @@ Hi! 👋  As part of our efforts to continually improve our DevOps processes, we
 - [ ] 10%-20%
 - [ ] 20%-30%
 - [ ] >30%
-4. If answer 1 is No, please explain why in a comment
+3. If answer 1 is No, please explain why in a comment

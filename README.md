@@ -31,7 +31,7 @@ Hi! 👋  As part of our efforts to continually improve our DevOps processes, we
 - 10%-20%
 - 20%-30%
 - \>30%
-4. If answer 1 is No, please explain why in a comment
+3. If answer 1 is No, please explain why in a comment
 
 As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. A report could be connected to this aplication (please talk to your GitHub contact in order to have the connection string for the database) or you can even decide to host your own your database!
 
