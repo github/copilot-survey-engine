@@ -11,4 +11,4 @@ Salut! 👋 Dans le cadre de nos efforts d'amélioration continue de nos process
 - [ ] 10%-20%
 - [ ] 20%-30%
 - [ ] >30%
-4. Si la réponse 1 est Non, veuillez expliquer pourquoi dans un commentaire
+3. Si la réponse 1 est Non, veuillez expliquer pourquoi dans un commentaire
