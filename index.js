@@ -35,7 +35,7 @@ module.exports = (app) => {
         result = await TAclient.analyze("LanguageDetection", [pr_body]);
         let duration = Date.now() - startTime;
         appIClient.trackDependency({target:"API:Language Detection", name:"get pull request language", duration:duration, resultCode:0, success: true, dependencyTypeName: "HTTP"});
-        if(!['en', 'es', 'pt'].includes(result[0].primaryLanguage.iso6391Name)){
+        if(!['en', 'es', 'pt', 'fr'].includes(result[0].primaryLanguage.iso6391Name)){
           result[0].primaryLanguage.iso6391Name = 'en';
         }
       }catch(err){
