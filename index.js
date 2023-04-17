@@ -58,7 +58,7 @@ module.exports = (app) => {
       await context.octokit.issues.create({
         owner: context.payload.repository.owner.login,
         repo: context.payload.repository.name,
-        title: "Copilot Usage",
+        title: "Copilot Usage - PR#" + pr_number.toString(),
         body: fileContent,
         assignee: context.payload.pull_request.user.login
       });
@@ -69,14 +69,14 @@ module.exports = (app) => {
   });
 
   app.on("issues.edited", async (context) => {
-    if(context.payload.issue.title === "Copilot Usage"){
+    if(context.payload.issue.title.startsWith("Copilot Usage - PR#")){
       appIClient.trackEvent({name: "Issue Edited Payload", properties: context.payload});
       await GetSurveyData(context);
     }
   });
 
   app.on("issue_comment.created", async (context) => {
-    if(context.payload.issue.title === "Copilot Usage"){
+    if(context.payload.issue.title.startsWith("Copilot Usage - PR#")){
       appIClient.trackEvent({name: "Issue Comment Created Payload", properties: context.payload});
       comment = context.payload.comment.body;
       await GetSurveyData(context);
