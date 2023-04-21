@@ -2,8 +2,6 @@
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) to prompt developers about their experience with Copilot!
 
-[Install it here!](https://github.com/apps/copilot-survey-engine/installations/new)
-
 ## App Objective
 
 As more companies adopt Copilot, there's an increasing need to measure the benefits in the organization. For such it is important to have in mind not only to do a quantitative analysis, but also qualitative. Combining quantitative and qualitative analysis is crucial in understanding the developer experience when using a tool. While quantitative analysis can provide valuable insights into usage patterns, adoption rates, and other measurable data, it doesn't tell the full story of how developers feel about a tool. Specially taking into consideration that there's many ways to interact with Copilot and get value from it, but not all of these are possible to be captured in KPIs as of now. 
@@ -33,16 +31,9 @@ Hi! 👋  As part of our efforts to continually improve our DevOps processes, we
 - \>30%
 3. If answer 1 is No, please explain why in a comment
 
-As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. A report could be connected to this aplication (please talk to your GitHub contact in order to have the connection string for the database) or you can even decide to host your own your database!
+As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. 
 
-Still not getting it? Look at this cool gif!!
-![GitHubSurveyEngine](https://user-images.githubusercontent.com/107436170/228025281-d70d13dc-8403-4993-8bdc-cd665279986b.gif)
-
-## Setup. Opiton 1. To use as-is
-
-You only need to install this App on your Org/Repos. [Install it here!](https://github.com/apps/copilot-survey-engine/installations/new)
-
-## Setup. Option 2. To deploy on your own environment
+## Setup. Deploy on your own environment
 
 ```sh
 # Install dependencies
