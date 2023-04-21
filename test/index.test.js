@@ -55,7 +55,7 @@ describe("My Probot app", () => {
       })
 
       // Test that a issue is created
-      .post("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues", (body) => {
+      .post("/repos/mageroni/TestRepo/issues", (body) => {
         expect(body).toMatchObject(expected_issue);
         return true;
       })
@@ -78,7 +78,7 @@ describe("My Probot app", () => {
         },
       })
 
-      .patch("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62", (body) => {
+      .patch("/repos/mageroni/TestRepo/issues/62", (body) => {
         expect(body).toMatchObject({state: 'closed'});
         return true;
       })
@@ -101,7 +101,7 @@ describe("My Probot app", () => {
         },
       })
 
-      .patch("/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/60", (body) => {
+      .patch("/repos/mageroni/TestRepo/issues/60", (body) => {
         expect(body).toMatchObject({state: 'closed'});
         return true;
       })

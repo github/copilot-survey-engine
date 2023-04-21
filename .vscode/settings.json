@@ -1,8 +1,0 @@
-{
-    "appService.defaultWebAppToDeploy": "/subscriptions/84945721-c6da-4c35-8ac8-7fb38005df05/resourceGroups/CoPilot-Surveys/providers/Microsoft.Web/sites/copilot-surveys-app",
-    "appService.deploySubpath": ".",
-    "appService.zipIgnorePattern": [
-        "node_modules{,/**}",
-        ".vscode{,/**}"
-    ]
-}
