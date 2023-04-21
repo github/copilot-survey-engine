@@ -1,8 +1,8 @@
 [
     {
-      "url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/comments/1475088517",
-      "html_url": "https://github.com/Mageroni-Org/Actions-more-than-CI-CD/issues/62#issuecomment-1475088517",
-      "issue_url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/62",
+      "url": "https://api.github.com/repos/mageroni/TestRepo/issues/comments/1475088517",
+      "html_url": "https://github.com/mageroni/TestRepo/issues/62#issuecomment-1475088517",
+      "issue_url": "https://api.github.com/repos/mageroni/TestRepo/issues/62",
       "id": 1475088517,
       "node_id": "IC_kwDOH5NwUM5X7BCF",
       "user": {
@@ -30,7 +30,7 @@
       "author_association": "COLLABORATOR",
       "body": "Comentario especial aqui!!",
       "reactions": {
-        "url": "https://api.github.com/repos/Mageroni-Org/Actions-more-than-CI-CD/issues/comments/1475088517/reactions",
+        "url": "https://api.github.com/repos/mageroni/TestRepo/issues/comments/1475088517/reactions",
         "total_count": 0,
         "+1": 0,
         "-1": 0,

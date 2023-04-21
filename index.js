@@ -11,7 +11,7 @@ require('dotenv').config();
 let comment = null;
 
 const { TextAnalysisClient, AzureKeyCredential } = require("@azure/ai-language-text");
-const { KEY, ENDPOINT, ConnString } = process.env;
+const { LANGUAGE_API_KEY, LANGUAGE_API_ENDPOINT, DATABASE_CONNECTION_STRING } = process.env;
 
 module.exports = (app) => {
   // Your code here
@@ -27,7 +27,7 @@ module.exports = (app) => {
     let pr_body = context.payload.pull_request.body;
     
     // check language for pr_body
-    const TAclient = new TextAnalysisClient(ENDPOINT, new AzureKeyCredential(KEY));
+    const TAclient = new TextAnalysisClient(LANGUAGE_API_ENDPOINT, new AzureKeyCredential(LANGUAGE_API_KEY));
     let result = [{primaryLanguage: {iso6391Name: 'en'}}];
     if(pr_body){
       try{
@@ -176,7 +176,7 @@ module.exports = (app) => {
   async function insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue){
     let conn = null;
     try{
-      conn = await sql.connect(ConnString);
+      conn = await sql.connect(DATABASE_CONNECTION_STRING);
 
       let result = await sql.query`SELECT * FROM SurveyResults WHERE issue_id = ${issue_id}`;
 

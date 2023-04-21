@@ -15,7 +15,7 @@ const issue_body = fs.readFileSync(
 );
 
 const expected_issue = {
-  title: "Copilot Usage",
+  title: "Copilot Usage - PR#44",
   body: issue_body,
 }
 
