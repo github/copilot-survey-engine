@@ -17,30 +17,30 @@ module.exports = (app) => {
   // Your code here
   app.log.info("Yay, the app was loaded!");
 
-  let appInsights = require('applicationinsights');
-  appInsights.setup().start();
-  let appIClient = appInsights.defaultClient;
+  let appInsights = new AppInsights();
 
   app.on("pull_request.closed", async (context) => {
-    appIClient.trackEvent({name: "Pull Request Close Payload", properties: context.payload});
+    appInsights.trackEvent({name: "Pull Request Close Payload", properties: context.payload});
     let pr_number = context.payload.pull_request.number;
     let pr_body = context.payload.pull_request.body;
-    
-    // check language for pr_body
-    const TAclient = new TextAnalysisClient(LANGUAGE_API_ENDPOINT, new AzureKeyCredential(LANGUAGE_API_KEY));
     let result = [{primaryLanguage: {iso6391Name: 'en'}}];
-    if(pr_body){
-      try{
-        let startTime = Date.now();
-        result = await TAclient.analyze("LanguageDetection", [pr_body]);
-        let duration = Date.now() - startTime;
-        appIClient.trackDependency({target:"API:Language Detection", name:"get pull request language", duration:duration, resultCode:0, success: true, dependencyTypeName: "HTTP"});
-        if(!['en', 'es', 'pt', 'fr'].includes(result[0].primaryLanguage.iso6391Name)){
-          result[0].primaryLanguage.iso6391Name = 'en';
+
+    // check language for pr_body
+    if(LANGUAGE_API_ENDPOINT && LANGUAGE_API_KEY){
+      const TAclient = new TextAnalysisClient(LANGUAGE_API_ENDPOINT, new AzureKeyCredential(LANGUAGE_API_KEY));
+      if(pr_body){
+        try{
+          let startTime = Date.now();
+          result = await TAclient.analyze("LanguageDetection", [pr_body]);
+          let duration = Date.now() - startTime;
+          appInsights.trackDependency({target:"API:Language Detection", name:"get pull request language", duration:duration, resultCode:0, success: true, dependencyTypeName: "HTTP"});
+          if(!['en', 'es', 'pt', 'fr'].includes(result[0].primaryLanguage.iso6391Name)){
+            result[0].primaryLanguage.iso6391Name = 'en';
+          }
+        }catch(err){
+          app.log.error(err);
+          appInsights.trackException({exception: err});
         }
-      }catch(err){
-        app.log.error(err);
-        appIClient.trackException({exception: err});
       }
     }
     
@@ -64,20 +64,20 @@ module.exports = (app) => {
       });
     }catch(err){
       app.log.error(err);
-      appIClient.trackException({exception: err});
+      appInsights.trackException({exception: err});
     }
   });
 
   app.on("issues.edited", async (context) => {
     if(context.payload.issue.title.startsWith("Copilot Usage - PR#")){
-      appIClient.trackEvent({name: "Issue Edited Payload", properties: context.payload});
+      appInsights.trackEvent({name: "Issue Edited Payload", properties: context.payload});
       await GetSurveyData(context);
     }
   });
 
   app.on("issue_comment.created", async (context) => {
     if(context.payload.issue.title.startsWith("Copilot Usage - PR#")){
-      appIClient.trackEvent({name: "Issue Comment Created Payload", properties: context.payload});
+      appInsights.trackEvent({name: "Issue Comment Created Payload", properties: context.payload});
       comment = context.payload.comment.body;
       await GetSurveyData(context);
       comment = null;
@@ -103,14 +103,14 @@ module.exports = (app) => {
       let startTime = Date.now();
       await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
       let duration = Date.now() - startTime;
-      appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when comment is present", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
+      appInsights.trackDependency({target:"DB:copilotUsage", name:"insert when comment is present", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
     }
 
     if(isCopilotUsed){
       let startTime = Date.now();
       await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
       let duration = Date.now() - startTime;
-      appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when Yes is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
+      appInsights.trackDependency({target:"DB:copilotUsage", name:"insert when Yes is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
 
       // loop through checkboxes and find the one that contains %
       let pctSelected = false;
@@ -130,7 +130,7 @@ module.exports = (app) => {
         let startTime = Date.now();
         await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue);
         let duration = Date.now() - startTime;
-        appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when pct is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
+        appInsights.trackDependency({target:"DB:copilotUsage", name:"insert when pct is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
 
         // close the issue
         try{
@@ -143,7 +143,7 @@ module.exports = (app) => {
         }
         catch(err){
           app.log.error(err);
-          appIClient.trackException({exception: err});
+          appInsights.trackException({exception: err});
         }
       }
     }else{
@@ -153,7 +153,7 @@ module.exports = (app) => {
         let startTime = Date.now();
         await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
         let duration = Date.now() - startTime;
-        appIClient.trackDependency({target:"DB:copilotUsage", name:"insert when No is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
+        appInsights.trackDependency({target:"DB:copilotUsage", name:"insert when No is selected", duration:duration, resultCode:0, success: true, dependencyTypeName: "SQL"});
 
         if(comment){
           try{
@@ -166,7 +166,7 @@ module.exports = (app) => {
             });
           }catch(err){
             app.log.error(err);
-            appIClient.trackException({exception: err});
+            appInsights.trackException({exception: err});
           }
         }
       }
@@ -205,7 +205,7 @@ module.exports = (app) => {
       }
     }catch(err){
       app.log.error(err);
-      appIClient.trackException({exception: err});
+      appInsights.trackException({exception: err});
     }finally{
       if(conn){
         conn.close();
@@ -213,11 +213,38 @@ module.exports = (app) => {
     }
   }
 
-  appIClient.flush();
-
   // For more information on building apps:
   // https://probot.github.io/docs/
 
   // To get your app running against GitHub, see:
   // https://probot.github.io/docs/development/
 };
+
+// Define class for app insights. If no instrumentation key is provided, then no app insights will be used.
+class AppInsights {
+  constructor() {
+    if(process.env.APPINSIGHTS_INSTRUMENTATIONKEY){
+      this.appInsights = require('applicationinsights');
+      this.appInsights.setup().start();
+      this.appIClient = this.appInsights.defaultClient;
+    }else{
+      this.appIClient = null;
+    }
+  }
+  trackEvent(name, properties) {
+    if(this.appIClient){
+      this.appIClient.trackEvent({name: name, properties: properties});
+    }
+    
+  }
+  trackDependency(target, name, duration, resultCode, success, dependencyTypeName) {
+    if(this.appIClient){
+     this.appIClient.trackDependency({target:target, name:name, duration:duration, resultCode:resultCode, success: success, dependencyTypeName: dependencyTypeName});
+    }
+  }
+  trackException(exception) {
+    if(this.appIClient){
+      this.appIClient.trackException({exception: exception});
+    }
+  }
+}
