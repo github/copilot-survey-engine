@@ -3,21 +3,18 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sites_app_name": {
-            "defaultValue": "[concat('web-app-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "unique web app name"
             }
         },
         "serverfarms_ASP_name": {
-            "defaultValue": "[concat('ASP-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "unique server app name"
             }
         },
         "sql_server_name": {
-            "defaultValue": "[concat('sql-server-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "unique database server name"
@@ -36,21 +33,18 @@
             }
         },
         "components_insight_name": {
-            "defaultValue": "[concat('web-app-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "application insights name"
             }
         },
         "accounts_ghazlanguage_name": {
-            "defaultValue": "[concat('ghazlanguage-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "cognitive service for language name"
             }
         },
         "virtualNetworks_vnet_name": {
-            "defaultValue": "[concat('vnet-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "virtual network name"
@@ -78,21 +72,18 @@
             }
         },
         "networkSecurityGroups_NSG_name": {
-            "defaultValue": "[concat('nsg-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "network security group name"
             }
         },
         "privateEndpoints_prv_endpoint_name": {
-            "defaultValue": "[concat('prve-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "private endpoint name"
             }
         },
         "networkInterfaces_prv_endpoint_nic_name": {
-            "defaultValue": "[concat('prve-nic-', uniqueString(subscription().id, resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "private endpoint nic name"

@@ -45,7 +45,7 @@ The web server and database are the minimum requirements for this app to work an
 
 ### Step 1. Create the resources
 
-You can use this link to deploy all resources automatically in your Azure subscription [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://raw.githubusercontent.com/mageroni/copilot-survey-engine/main/deployment/template.json)
+You can use this link to deploy all resources automatically in your Azure subscription [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmageroni%2Fcopilot-survey-engine%2Fmain%2Fdeployment%2Ftemplate.json)
 
 Or 
 
