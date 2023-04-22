@@ -1,0 +1,407 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_app_name": {
+            "defaultValue": "[concat('web-app-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "unique web app name"
+            }
+        },
+        "serverfarms_ASP_name": {
+            "defaultValue": "[concat('ASP-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "unique server app name"
+            }
+        },
+        "sql_server_name": {
+            "defaultValue": "[concat('sql-server-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "unique database server name"
+            }
+        },
+        "sql_administrator_login": {
+            "type": "String",
+            "metadata": {
+                "description": "Azure SQL DB administrator login name"
+            }
+        },
+        "sql_administrator_login_password": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Azure SQL DB administrator password"
+            }
+        },
+        "components_insight_name": {
+            "defaultValue": "[concat('web-app-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "application insights name"
+            }
+        },
+        "accounts_ghazlanguage_name": {
+            "defaultValue": "[concat('ghazlanguage-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "cognitive service for language name"
+            }
+        },
+        "virtualNetworks_vnet_name": {
+            "defaultValue": "[concat('vnet-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "virtual network name"
+            }
+        },
+        "virtualNetworks_address_space": {
+            "defaultValue": "10.0.0.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "virtual network address space"
+            }
+        },
+        "subnets_sqldatabase_address_space": {
+            "defaultValue": "10.0.0.128/28",
+            "type": "String",
+            "metadata": {
+                "description": "subnet address space for database"
+            }
+        },
+        "subnets_appservice_address_space": {
+            "defaultValue": "10.0.0.0/25",
+            "type": "String",
+            "metadata": {
+                "description": "subnet address space for app service"
+            }
+        },
+        "networkSecurityGroups_NSG_name": {
+            "defaultValue": "[concat('nsg-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "network security group name"
+            }
+        },
+        "privateEndpoints_prv_endpoint_name": {
+            "defaultValue": "[concat('prve-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "private endpoint name"
+            }
+        },
+        "networkInterfaces_prv_endpoint_nic_name": {
+            "defaultValue": "[concat('prve-nic-', uniqueString(subscription().id, resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "private endpoint nic name"
+            }
+        },
+        "workspaces_log_analytics_name": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "log analytics workspace id"
+            }
+        }
+    },
+    "variables": {
+        "resourceGroup_location" : "[resourceGroup().location]",
+        "privateDnsZones_privatelink_database_windows_net_name" : "privatelink.database.windows.net"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('networkSecurityGroups_NSG_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "dependsOn": [],
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('virtualNetworks_vnet_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_NSG_name'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('virtualNetworks_address_space')]"
+                    ]
+                },
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2022-09-01",
+            "name": "[concat(parameters('virtualNetworks_vnet_name'), '/AppServiceSnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_NSG_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('subnets_appservice_address_space')]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_NSG_name'))]"
+                },
+                "delegations": [
+                    {
+                        "name": "delegation",
+                        "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet'), '/delegations/delegation')]",
+                        "properties": {
+                            "serviceName": "Microsoft.Web/serverfarms"
+                        },
+                        "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+                    }
+                ],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2022-09-01",
+            "name": "[concat(parameters('virtualNetworks_vnet_name'), '/SqlDatabaseSnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_NSG_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet')]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('subnets_sqldatabase_address_space')]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_NSG_name'))]"
+                },
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.CognitiveServices/accounts",
+            "apiVersion": "2022-12-01",
+            "name": "[parameters('accounts_ghazlanguage_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "sku": {
+                "name": "S"
+            },
+            "kind": "TextAnalytics",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "apiProperties": {},
+                "customSubDomainName": "[parameters('accounts_ghazlanguage_name')]",
+                "networkAcls": {
+                    "defaultAction": "Allow",
+                    "virtualNetworkRules": [],
+                    "ipRules": []
+                },
+                "publicNetworkAccess": "Enabled"
+            }
+        },
+        {
+            "type": "microsoft.insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[parameters('components_insight_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web",
+                "Flow_Type": "Redfield",
+                "Request_Source": "IbizaWebAppExtensionCreate",
+                "RetentionInDays": 90,
+                "WorkspaceResourceId": "[parameters('workspaces_log_analytics_name')]",
+                "IngestionMode": "LogAnalytics",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[variables('privateDnsZones_privatelink_database_windows_net_name')]",
+            "location": "global",
+            "properties": {
+                "maxNumberOfRecordSets": 25000,
+                "maxNumberOfVirtualNetworkLinks": 1000,
+                "maxNumberOfVirtualNetworkLinksWithRegistration": 100,
+                "numberOfRecordSets": 2,
+                "numberOfVirtualNetworkLinks": 1,
+                "numberOfVirtualNetworkLinksWithRegistration": 0,
+                "provisioningState": "Succeeded"
+            }
+        },
+        {
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2022-05-01-preview",
+            "name": "[parameters('sql_server_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "properties": {
+                "administratorLogin": "[parameters('sql_administrator_login')]",
+                "administratorLoginPassword": "[parameters('sql_administrator_login_password')]",
+                "version": "12.0",
+                "publicNetworkAccess": "Disabled"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('serverfarms_ASP_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "sku": {
+                "name": "S1",
+                "tier": "Standard"
+            },
+            "kind": "linux",
+            "properties": {
+                "reserved": true
+            }
+        },
+        {
+            "type": "Microsoft.Sql/servers/databases",
+            "apiVersion": "2022-08-01-preview",
+            "name": "[concat(parameters('sql_server_name'), '/copilotUsage')]",
+            "location": "[variables('resourceGroup_location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]"
+            ],
+            "sku": {
+                "name": "GP_Gen5",
+                "tier": "GeneralPurpose",
+                "family": "Gen5",
+                "capacity": 2
+            },
+            "kind": "v12.0,user,vcore",
+            "properties": {
+                "collation": "SQL_Latin1_General_CP1_CI_AS",
+                "maxSizeBytes": 34359738368,
+                "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
+                "zoneRedundant": false,
+                "licenseType": "LicenseIncluded",
+                "readScale": "Disabled",
+                "requestedBackupStorageRedundancy": "Local",
+                "isLedgerOn": false,
+                "availabilityZone": "NoPreference"
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(variables('privateDnsZones_privatelink_database_windows_net_name'), '/', variables('privateDnsZones_privatelink_database_windows_net_name'), '-', parameters('virtualNetworks_vnet_name'), '-link')]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZones_privatelink_database_windows_net_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_vnet_name'))]"
+            ],
+            "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_vnet_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('privateEndpoints_prv_endpoint_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'SqlDatabaseSnet')]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[parameters('privateEndpoints_prv_endpoint_name')]",
+                        "id": "[concat(resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpoints_prv_endpoint_name')), concat('/privateLinkServiceConnections/', parameters('privateEndpoints_prv_endpoint_name')))]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]",
+                            "groupIds": [
+                                "sqlServer"
+                            ],
+                            "privateLinkServiceConnectionState": {
+                                "status": "Approved",
+                                "description": "Auto-approved",
+                                "actionsRequired": "None"
+                            }
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "customNetworkInterfaceName": "[parameters('networkInterfaces_prv_endpoint_nic_name')]",
+                "subnet": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'SqlDatabaseSnet')]"
+                },
+                "ipConfigurations": [],
+                "customDnsConfigs": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-09-01",
+            "name": "[concat(parameters('privateEndpoints_prv_endpoint_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpoints_prv_endpoint_name'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZones_privatelink_database_windows_net_name'))]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "privatelink-database-windows-net",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZones_privatelink_database_windows_net_name'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('sites_app_name')]",
+            "location": "[variables('resourceGroup_location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_ASP_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet')]"
+            ],
+            "kind": "app,linux",
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_ASP_name'))]",
+                "vnetRouteAllEnabled": true,
+                "siteConfig": {
+                    "numberOfWorkers": 1,
+                    "linuxFxVersion": "NODE|18-lts",
+                    "alwaysOn": true
+                },
+                "httpsOnly": true,
+                "redundancyMode": "None",
+                "publicNetworkAccess": "Enabled",
+                "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet')]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/virtualNetworkConnections",
+            "apiVersion": "2022-09-01",
+            "name": "[concat(parameters('sites_app_name'), '/0b978347-989b-4d5a-a91a-cc98ca852b73_AppServiceSnet')]",
+            "location": "[variables('resourceGroup_location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet')]"
+            ],
+            "properties": {
+                "vnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet')]",
+                "isSwift": true
+            }
+        }
+    ]
+}

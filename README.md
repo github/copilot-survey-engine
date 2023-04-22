@@ -12,7 +12,7 @@ I hope you can get value from this project and feel free to contribute and build
 
 ## How it works
 
-The App listens on 3 main events: Pull Request closed, issue edited and issue comment created. Once a Pull Request has been closed, the workflow will trigger and create an issue asking the identified survey questions. We are able to support English, Spanish and Portuguese, so the engine will do a language analysis on the description of the Pull Request to try to match the same language in the issue creation. 
+The App listens on 3 main events: Pull Request closed, issue edited and issue comment created. Once a Pull Request has been closed, the workflow will trigger and create an issue asking the identified survey questions. We are able to support English, Spanish, Portuguese and French so the engine will do a language analysis on the description of the Pull Request to try to match the same language in the issue creation. 
 
 Once the issue is created, the following questions are presented to the developer:
 
@@ -35,6 +35,28 @@ As we receive edits on the issue, the App will validate the responses received (
 
 ## Setup. Deploy on your own environment
 
+For doing a local deployment of this GitHub App, you will need to set up an environment with the following components:
+- Web Server
+- Database
+- Azure Cognitive Service for Language (optional)
+- Azure Applications Insights (optional)
+
+The web server and database are the minimum requirements for this app to work and can be hosted on any environment of your choosing (cloud or on-prem). If you decide to do the deployment on Azure, this guide will help you!
+
+### Step 1. Create the resources
+
+You can use this link to deploy all resources automatically in your Azure subscription [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://raw.githubusercontent.com/mageroni/copilot-survey-engine/main/deployment/template.json)
+
+Or 
+
+You can follow the guidelines below to deploy resources manually:
+
+TBA
+
+### Step 2. Execute locally and configure secrets
+
+To run the application on you local machine you'll need to have installed NodeJS. Once you have it, you can access to the folder where you've cloned this project and run the following:
+
 ```sh
 # Install dependencies
 npm install
@@ -43,17 +65,17 @@ npm install
 npm start
 ```
 
-Once you clone the project and execute this commands locally, as a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. You could then modify the deployment settings to deploy the app in the infrastructure of your liking and connect it to your desired database. 
+As a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. 
 
-## When running in Docker
+You will also need to provide the DATABASE_CONNECTION_STRING in your env file. 
 
-```sh
-# 1. Build container
-docker build -t copilot-survey-engine .
+Optionally if you'll be also using Application Ingishts please provide the value for APPLICATIONINSIGHTS_CONNECTION_STRING. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Application Insights and copy the Connection String in the Essentials section of the Overview page. 
 
-# 2. Start container
-docker run -e APP_ID=<app-id> -e PRIVATE_KEY=<pem-value> copilot-survey-engine
-```
+Optionally if you'll be also using Languange detection API please provide the value for LANGUAGE_API_ENDPOINT, LANGUAGE_API_KEY. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Language and go to Keys and Endpoint. Copy one of the keys and corresponding endpoint. 
+
+### Step 3. Deploy your App!
+
+TBA
 
 ## Contributing
 
