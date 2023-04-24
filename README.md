@@ -59,7 +59,7 @@ npm install
 npm start
 ```
 
-As a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. 
+As a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. If you need guidance on how to configure your first GitHub App, please review this guide https://probot.github.io/docs/development/#configuring-a-github-app.
 
 You will also need to provide the DATABASE_CONNECTION_STRING in your env file. 
 
@@ -71,7 +71,18 @@ Optionally if you'll be also using Languange detection API please provide the va
 
 For a quick deployment you could open your Visual Studio Code and open the cloned project. Make sure you have the Azure Tools extension installed. If not, please install it https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack
 
-Once you have the extension sign in to Azure with your credentials go to your Explorer view and right click in the file directory to select the option "Deploy to web app". Select the subscription you'd like to use to deploy
+Once you have the extension sign in to Azure with your credentials go to your Explorer view and right click in the file directory to select the option "Deploy to web app". Select the subscription in which you've created the resources in step 1. Select the name you chose for the App Service created in step 1. 
+
+Finally go to your GitHub App and update your webhook URL to reflect your App Service URL. 
+
+
+### Step 4. Test your App!
+
+Make sure you have your app installed in at least one repo.
+
+In such repo, create a pull request and close it (either close it or merge/complete it). Confirm that an issue has been created with the name "Copilot Usage - PR#XX". Answer the questions and confirm that the issue is closed and the data has been recorded into your database. 
+
+Congrats!!!!! Enjoy and keep expanding the project. 
 
 ## Contributing
 
