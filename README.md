@@ -37,21 +37,15 @@ As we receive edits on the issue, the App will validate the responses received (
 
 For doing a local deployment of this GitHub App, you will need to set up an environment with the following components:
 - Web Server
-- Database
+- SQL Database
 - Azure Cognitive Service for Language (optional)
 - Azure Applications Insights (optional)
 
-The web server and database are the minimum requirements for this app to work and can be hosted on any environment of your choosing (cloud or on-prem). If you decide to do the deployment on Azure, this guide will help you!
+The web server and SQL database are the minimum requirements for this app to work and can be hosted on any environment of your choosing (cloud or on-prem). If you decide to do the deployment on Azure, this guide will help you!
 
 ### Step 1. Create the resources
 
 You can use this link to deploy all resources automatically in your Azure subscription [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmageroni%2Fcopilot-survey-engine%2Fmain%2Fdeployment%2Ftemplate.json)
-
-Or 
-
-You can follow the guidelines below to deploy resources manually:
-
-TBA
 
 ### Step 2. Execute locally and configure secrets
 
@@ -75,7 +69,9 @@ Optionally if you'll be also using Languange detection API please provide the va
 
 ### Step 3. Deploy your App!
 
-TBA
+For a quick deployment you could open your Visual Studio Code and open the cloned project. Make sure you have the Azure Tools extension installed. If not, please install it https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack
+
+Once you have the extension sign in to Azure with your credentials go to your Explorer view and right click in the file directory to select the option "Deploy to web app". Select the subscription you'd like to use to deploy
 
 ## Contributing
 
