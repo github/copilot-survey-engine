@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sites_app_name": {
+        "value": ""
+    },
+    "serverfarms_ASP_name": {
+        "value": ""
+    },
+    "sql_server_name": {
+        "value": ""
+    },
+    "components_insight_name": {
+        "value": ""
+    },
+    "accounts_ghazlanguage_name": {
+        "value": ""
+    },
+    "virtualNetworks_vnet_name": {
+        "value": ""
+    },
+    "networkSecurityGroups_NSG_name": {
+        "value": ""
+    },
+    "privateEndpoints_prv_endpoint_name": {
+        "value": ""
+    },
+    "networkInterfaces_prv_endpoint_nic_name": {
+        "value": ""
+    },
+    "workspaces_log_analytics_name": {
+        "value": ""
+    },
+    "github_app_id": {
+        "value": ""
+    }
+  }
+}
