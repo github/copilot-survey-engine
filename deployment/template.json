@@ -91,11 +91,11 @@
                 "description": "private endpoint nic name"
             }
         },
-        "workspaces_log_analytics_name": {
+        "workspaces_log_analytics_resource_id": {
             "defaultValue": "Optional",
             "type": "String",
             "metadata": {
-                "description": "log analytics workspace id"
+                "description": "log analytics workspace resource id"
             }
         }
     },
@@ -215,7 +215,7 @@
                 "Flow_Type": "Redfield",
                 "Request_Source": "IbizaWebAppExtensionCreate",
                 "RetentionInDays": 90,
-                "WorkspaceResourceId": "[parameters('workspaces_log_analytics_name')]",
+                "WorkspaceResourceId": "[parameters('workspaces_log_analytics_resource_id')]",
                 "IngestionMode": "LogAnalytics",
                 "publicNetworkAccessForIngestion": "Enabled",
                 "publicNetworkAccessForQuery": "Enabled"
