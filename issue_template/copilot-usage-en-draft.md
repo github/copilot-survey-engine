@@ -1,14 +1,19 @@
 ### Copilot Usage Survey
 
-Hi! 👋  As part of our efforts to continually improve our DevOps processes, we would like to gather your valuable feedback on your experience with Copilot for Pull Request XXX by asking the following questions:
+For Pull Request XXX:
 
-1. Did Copilot save you time [...] in developing this component?
+1. Did you use Copilot in developing this PR?
 - [ ] No
 - [ ] Yes
-2. If answer 1 is Yes, how much was the improvement (5%, 10%, 20%, 30% or more)?
-- [ ] <5%
+2. What percetange of time would you estimate Copilot saved you on this PR?
+- [ ] 0%
+- [ ] 1%-5%
 - [ ] 5%-10%
 - [ ] 10%-20%
 - [ ] 20%-30%
 - [ ] >30%
-3. If answer 1 is No, please explain why in a comment
+3. How often did you use Copilot in this PR?
+- Heavy
+- Medium
+- Little
+4. What other feedback do you have for us?
