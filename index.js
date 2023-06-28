@@ -273,22 +273,26 @@ module.exports = (app) => {
         // Create table if it doesn't exist
         await sql.query`
         CREATE TABLE SurveyResults (
-          id INT IDENTITY(1,1) PRIMARY KEY,
-          issue_id INT NOT NULL,
-          PR_number INT,
-          Value_detected BIT,
-          Value_percentage VARCHAR(50),
-          Value_ndetected_reason VARCHAR(MAX),
-          completed_at DATETIME,
-          enterprise_name VARCHAR(50),
-          assignee_name VARCHAR(50)
-        )
+          record_ID int IDENTITY(1,1),  
+          enterprise_name varchar(50),
+          organization_name varchar(50),
+          repository_name varchar(50),
+          issue_id int,
+          issue_number varchar(20),
+          PR_number varchar(20),
+          assignee_name varchar(50),
+          value_detected BIT,
+          value_percentage varchar(10),
+          value_ndetected_reason varchar(255),
+          created_at DATETIME,
+          completed_at DATETIME
+      );
       `;
       }
 
       let result =
-        await sql.query`SELECT * FROM SurveyResults WHERE issue_id = ${issue_id}`;
-      console.log("here again");
+        await sql.query`SELECT * FROM SurveyResults WHERE Issue_id = ${issue_id}`;
+      app.log.info("Database has been created and issue id existence has been confirmed");
 
       // convert pctValue to string
       if (pctValue) {
@@ -298,39 +302,51 @@ module.exports = (app) => {
       if (result.recordset.length > 0) {
         // update existing record
         let update_result =
-          await sql.query`UPDATE SurveyResults SET PR_number = ${pr_number}, Value_detected = ${isCopilotUsed}, Value_percentage = ${pctValue}, Value_ndetected_reason = ${comment}, 	completed_at = ${context.payload.issue.updated_at} WHERE issue_id = ${issue_id}`;
+          await sql.query`UPDATE SurveyResults SET PR_number = ${pr_number}, value_detected = ${isCopilotUsed}, value_percentage = ${pctValue}, value_ndetected_reason = ${comment}, 	completed_at = ${context.payload.issue.updated_at} WHERE issue_id = ${issue_id}`;
         app.log.info(update_result);
       } else {
-        // check if enterprise is present in context.payload
+        // check if dynamic values are present in context.payload
         let enterprise_name = null;
         let assignee_name = null;
+        let organization_name = null;
         if (context.payload.enterprise) {
           enterprise_name = context.payload.enterprise.name;
         }
         if (context.payload.issue.assignee) {
           assignee_name = context.payload.issue.assignee.login;
         }
+        if(context.payload.organization){
+          organization_name = context.payload.organization.login;
+        }
 
         let insert_result = await sql.query`
           INSERT INTO SurveyResults (
-            issue_id,
-            PR_number,
-            Value_detected,
-            Value_percentage,
-            Value_ndetected_reason,
-            completed_at,
             enterprise_name,
-            assignee_name
+            organization_name,
+            repository_name,
+            issue_id,
+            issue_number,
+            PR_number,
+            assignee_name,
+            value_detected,
+            value_percentage,
+            value_ndetected_reason,
+            created_at,
+            completed_at
           )
           VALUES (
+            ${enterprise_name},
+            ${organization_name},
+            ${context.payload.repository.name},
             ${issue_id},
+            ${context.payload.issue.number},
             ${pr_number},
+            ${assignee_name},
             ${isCopilotUsed},
             ${pctValue},
             ${comment},
-            ${context.payload.issue.updated_at},
-            ${enterprise_name},
-            ${assignee_name}
+            ${context.payload.issue.created_at},
+            ${context.payload.issue.updated_at}
           )
       `;
         app.log.info(insert_result);
