@@ -4,11 +4,13 @@
 
 ## App Objective
 
-As more companies adopt Copilot, there's an increasing need to measure the benefits in the organization. For such it is important to have in mind not only to do a quantitative analysis, but also qualitative. Combining quantitative and qualitative analysis is crucial in understanding the developer experience when using a tool. While quantitative analysis can provide valuable insights into usage patterns, adoption rates, and other measurable data, it doesn't tell the full story of how developers feel about a tool. Specially taking into consideration that there's many ways to interact with Copilot and get value from it, but not all of these are possible to be captured in KPIs as of now. 
+As more companies adopt GitHub Copilot, it becomes increasingly important to measure the benefits it brings to the organization. While quantitative analysis is valuable for measuring usage patterns and adoption rates, it is equally essential to consider qualitative analysis. By combining both quantitative and qualitative approaches, we can gain a comprehensive understanding of the developer experience when using this tool.
 
-To gain a deeper understanding of user satisfaction, a qualitative survey is key. This app intends to help companis on that journey, so we can start with 3 basic questions and integrate them in the very tool, so it's also part of the DevOps lifecycle. This information is hosted on a database so it can provide insight into how developers are using the tool, what value they're perceiving to receive and challenges that have been presented.
+Quantitative analysis provides valuable insights, but it alone cannot capture the full story of how developers truly feel about Copilot. This is particularly important because Copilot offers various ways for developers to interact with it and derive value, some of which may not be captured by current Key Performance Indicators (KPIs).
 
-I hope you can get value from this project and feel free to contribute and build on top of this!
+To gain a deeper understanding of user satisfaction, we have designed this app a part of the DevOps lifecycle to facilitate qualitative surveys. The survey responses are stored in your private Azure SQL database to provide insights into how developers are using the tool, the value they perceive, and the challenges they encounter.
+
+We hope that this project provides value to your organization, and we encourage you to contribute and build upon it. Your contributions can help further enhance the survey capabilities and provide even greater insights into the developer experience with Copilot.
 
 ## How it works
 
