@@ -9,31 +9,23 @@ As more companies adopt GitHub Copilot, it becomes increasingly important to mea
 Quantitative analysis provides valuable insights, but it alone cannot capture the full story of how developers truly feel about Copilot. This is particularly important because Copilot offers various ways for developers to interact with it and derive value, some of which may not be captured by current Key Performance Indicators (KPIs).
 
 To gain a deeper understanding of user satisfaction, we have designed this app a part of the DevOps lifecycle to facilitate qualitative surveys. The survey responses are stored in your private Azure SQL database to provide insights into how developers are using the tool, the value they perceive, and the challenges they encounter.
-
+k
 We hope that this project provides value to your organization, and we encourage you to contribute and build upon it. Your contributions can help further enhance the survey capabilities and provide even greater insights into the developer experience with Copilot.
 
 ## How it works
 
-The App listens on 3 main events: Pull Request closed, issue edited and issue comment created. Once a Pull Request has been closed, the workflow will trigger and create an issue asking the identified survey questions. We are able to support English, Spanish, Portuguese and French so the engine will do a language analysis on the description of the Pull Request to try to match the same language in the issue creation. 
+The application actively monitors three key events: the closure of a pull request, editing of an issue, and creation of an issue comment. 
 
-Once the issue is created, the following questions are presented to the developer:
+### How a survey gets created
 
-### Copilot Usage Survey
+When a pull request is closed, the app automatically creates an issue that prompts the user with relevant survey questions. Our application is equipped to handle multiple languages, including English, Spanish, Portuguese, and French. To ensure seamless integration, the engine performs a language analysis on the pull request description, matching it with the appropriate language when generating the corresponding issue.
 
-Hi! 👋  As part of our efforts to continually improve our DevOps processes, we would like to gather your valuable feedback on your experience with Copilot for Pull Request #26 by asking the following questions:
+### Sample screenshot of a survey 
 
-1. Did Copilot save time or increase productivity in developing this component?
-- Yes
-- No
-2. If answer 1 is Yes, how much was the improvement (5%, 10%, 20%, 30% or more)?
-- <5%
-- 5%-10%
-- 10%-20%
-- 20%-30%
-- \>30%
-3. If answer 1 is No, please explain why in a comment
+![Alt text](image.png)
 
-As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a database. 
+### Where does the app store surveys?
+As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a private Azure SQL database. 
 
 ## Setup. Deploy on your own environment
 
