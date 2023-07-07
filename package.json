@@ -16,7 +16,7 @@
     "test": "jest --detectOpenHandles"
   },
   "dependencies": {
-    "@azure/ai-language-text": "^1.0.0",
+    "@azure/ai-language-text": "^1.1.0",
     "applicationinsights": "^2.7.0",
     "dedent": "^0.7.0",
     "mssql": "^9.1.1",
