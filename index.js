@@ -44,7 +44,7 @@ module.exports = (app) => {
           let duration = Date.now() - startTime;
           appInsights.trackDependency({
             target: "API:Language Detection",
-            name: "get pull request language",
+            name: "detect pull request description language",
             duration: duration,
             resultCode: 0,
             success: true,
@@ -144,11 +144,12 @@ module.exports = (app) => {
     // if there's a comment, insert it into the DB regardless of whether the user answered the survey or not
     if (comment) {
       let startTime = Date.now();
-      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
+      let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
       let duration = Date.now() - startTime;
       appInsights.trackDependency({
         target: "DB:copilotUsage",
         name: "insert when comment is present",
+        data: query,
         duration: duration,
         resultCode: 0,
         success: true,
@@ -158,11 +159,12 @@ module.exports = (app) => {
 
     if (isCopilotUsed) {
       let startTime = Date.now();
-      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
+      let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
       let duration = Date.now() - startTime;
       appInsights.trackDependency({
         target: "DB:copilotUsage",
         name: "insert when Yes is selected",
+        data: query,
         duration: duration,
         resultCode: 0,
         success: true,
@@ -184,19 +186,12 @@ module.exports = (app) => {
       if (pctSelected) {
         //if percentage is selected, insert into DB
         let startTime = Date.now();
-        await insertIntoDB(
-          context,
-          issue_id,
-          pr_number,
-          isCopilotUsed,
-          pctValue,
-          null,
-          comment
-        );
+        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null, comment);
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
           target: "DB:copilotUsage",
           name: "insert when pct is selected",
+          data: query,
           duration: duration,
           resultCode: 0,
           success: true,
@@ -229,19 +224,12 @@ module.exports = (app) => {
       if (freqSelected) {
         //if frequency is selected, insert into DB
         let startTime = Date.now();
-        await insertIntoDB(
-          context,
-          issue_id,
-          pr_number,
-          isCopilotUsed,
-          null,
-          freqValue,
-          comment
-        );
+        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, freqValue, comment);
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
           target: "DB:copilotUsage",
           name: "insert when freq is selected",
+          data: query,
           duration: duration,
           resultCode: 0,
           success: true,
@@ -274,11 +262,12 @@ module.exports = (app) => {
         })
       ) {
         let startTime = Date.now();
-        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
+        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
           target: "DB:copilotUsage",
           name: "insert when No is selected",
+          data: query,
           duration: duration,
           resultCode: 0,
           success: true,
@@ -383,7 +372,7 @@ module.exports = (app) => {
         // update existing record
         let update_result = await sql.query(update_query);
         app.log.info(update_result);
-        
+        return update_query;
       } else {
         // check if dynamic values are present in context.payload
         let enterprise_name = null;
@@ -397,9 +386,7 @@ module.exports = (app) => {
         if(context.payload.organization){
           organization_name = context.payload.organization.login;
         }
-
-        let insert_result = await sql.query`
-          INSERT INTO SurveyResults (
+        let insert_query = `INSERT INTO SurveyResults (
             enterprise_name,
             organization_name,
             repository_name,
@@ -428,9 +415,10 @@ module.exports = (app) => {
             ${comment},
             ${context.payload.issue.created_at},
             ${context.payload.issue.updated_at}
-          )
-      `;
+          )`;
+        let insert_result = await sql.query(insert_query);
         app.log.info(insert_result);
+        return insert_query;
       }
     } catch (err) {
       app.log.error(err);
@@ -468,6 +456,7 @@ class AppInsights {
   trackDependency(
     target,
     name,
+    data,
     duration,
     resultCode,
     success,
@@ -477,6 +466,7 @@ class AppInsights {
       this.appIClient.trackDependency({
         target: target,
         name: name,
+        data: data,
         duration: duration,
         resultCode: resultCode,
         success: success,
