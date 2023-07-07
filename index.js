@@ -383,12 +383,16 @@ module.exports = (app) => {
         // update existing record
         let update_result = await sql.query(update_query);
         app.log.info(update_result);
+        
       } else {
         // check if dynamic values are present in context.payload
         let enterprise_name = null;
         let organization_name = null;
         if (context.payload.enterprise) {
           enterprise_name = context.payload.enterprise.name;
+        }
+        if(context.payload.organization){
+          organization_name = context.payload.organization.login;
         }
         if(context.payload.organization){
           organization_name = context.payload.organization.login;
