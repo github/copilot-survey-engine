@@ -1,6 +1,6 @@
 ### Pesquisa de uso do Copilot
 
-Para Pull Request XXX:
+Para o Pull Request XXX:
 
 1. Você usou o Copilot no desenvolvimento deste PR? (Se você selecionar Não, apenas responda à pergunta 4)
 - [ ] Não
