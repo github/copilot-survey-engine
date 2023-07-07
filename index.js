@@ -8,7 +8,6 @@ const fs = require("fs");
 const path = require("path");
 const sql = require("mssql");
 require("dotenv").config();
-let comment = null;
 
 const {
   TextAnalysisClient,
@@ -112,15 +111,19 @@ module.exports = (app) => {
         name: "Issue Comment Created Payload",
         properties: context.payload,
       });
-      comment = context.payload.comment.body;
       await GetSurveyData(context);
-      comment = null;
     }
   });
 
   async function GetSurveyData(context) {
     let issue_body = context.payload.issue.body;
     let issue_id = context.payload.issue.id;
+
+    // save comment body if present
+    let comment = null;
+    if(context.payload.comment) {
+      comment = context.payload.comment.body;
+    }
 
     // find regex [0-9]\+ in issue_body and get first result
     let pr_number = issue_body.match(/[0-9]+/)[0];
@@ -138,9 +141,10 @@ module.exports = (app) => {
       );
     });
 
+    // if there's a comment, insert it into the DB regardless of whether the user answered the survey or not
     if (comment) {
       let startTime = Date.now();
-      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
       let duration = Date.now() - startTime;
       appInsights.trackDependency({
         target: "DB:copilotUsage",
@@ -154,7 +158,7 @@ module.exports = (app) => {
 
     if (isCopilotUsed) {
       let startTime = Date.now();
-      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
       let duration = Date.now() - startTime;
       appInsights.trackDependency({
         target: "DB:copilotUsage",
@@ -178,15 +182,16 @@ module.exports = (app) => {
         }
       }
       if (pctSelected) {
-        // save into sql atabase with connstring
-
+        //if percentage is selected, insert into DB
         let startTime = Date.now();
         await insertIntoDB(
           context,
           issue_id,
           pr_number,
           isCopilotUsed,
-          pctValue
+          pctValue,
+          null,
+          comment
         );
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
@@ -197,7 +202,54 @@ module.exports = (app) => {
           success: true,
           dependencyTypeName: "SQL",
         });
+      }
 
+      // loop through checkboxes and find the ones that do not contain % and are not Yes or No
+      let freqSelected = false;
+      let freqValue = new Array();
+      for (const checkbox of checkboxes) {
+        if (
+          !checkbox.includes("%") &&
+          !checkbox.includes("Sim") &&
+          !checkbox.includes("Si") &&
+          !checkbox.includes("Yes") &&
+          !checkbox.includes("Oui") &&
+          !checkbox.includes("Não") &&
+          !checkbox.includes("No") &&
+          !checkbox.includes("Non")
+        ) {
+          freqSelected = true;
+          frequencyValue = checkbox;
+          frequencyValue = frequencyValue.replace(/\[x\] /g, "");
+          freqValue.push(frequencyValue);
+          app.log.info(frequencyValue);
+        }
+      }
+
+      if (freqSelected) {
+        //if frequency is selected, insert into DB
+        let startTime = Date.now();
+        await insertIntoDB(
+          context,
+          issue_id,
+          pr_number,
+          isCopilotUsed,
+          null,
+          freqValue,
+          comment
+        );
+        let duration = Date.now() - startTime;
+        appInsights.trackDependency({
+          target: "DB:copilotUsage",
+          name: "insert when freq is selected",
+          duration: duration,
+          resultCode: 0,
+          success: true,
+          dependencyTypeName: "SQL",
+        });
+      }
+
+      if( pctSelected && freqSelected ){
         // close the issue
         try {
           await context.octokit.issues.update({
@@ -222,7 +274,7 @@ module.exports = (app) => {
         })
       ) {
         let startTime = Date.now();
-        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null);
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
           target: "DB:copilotUsage",
@@ -256,7 +308,9 @@ module.exports = (app) => {
     issue_id,
     pr_number,
     isCopilotUsed,
-    pctValue
+    pctValue,
+    freqValue,
+    comment
   ) {
     let conn = null;
     try {
@@ -281,9 +335,10 @@ module.exports = (app) => {
           issue_number varchar(20),
           PR_number varchar(20),
           assignee_name varchar(50),
-          value_detected BIT,
-          value_percentage varchar(10),
-          value_ndetected_reason varchar(255),
+          is_copilot_used BIT,
+          saving_percentage varchar(25),
+          usage_frequency varchar(50),
+          comment varchar(255),
           created_at DATETIME,
           completed_at DATETIME
       );
@@ -298,22 +353,46 @@ module.exports = (app) => {
       if (pctValue) {
         pctValue = pctValue.toString();
       }
+      // convert freqValue to string
+      if (freqValue) {
+        freqValue = freqValue.toString();
+      }
+
+      let assignee_name = null;
+      if (context.payload.issue.assignee) {
+        assignee_name = context.payload.issue.assignee.login;
+      }
 
       if (result.recordset.length > 0) {
+        // create query
+        let update_query = `UPDATE [SurveyResults] SET [is_copilot_used] = ${isCopilotUsed? 1 : 0}, [completed_at] = '${context.payload.issue.updated_at}'`;
+        if (assignee_name) {
+          update_query += `, [assignee_name] = '${assignee_name}'`;
+        }
+        if (pctValue) {
+          update_query += `, [saving_percentage] = '${pctValue}'`;
+        }
+        if (freqValue) {
+          update_query += `, [usage_frequency] = '${freqValue}'`;
+        }
+        if (comment) {
+          update_query += `, [comment] = '${comment}'`;
+        }
+        update_query += ` WHERE [issue_id] = ${issue_id}`;
+
         // update existing record
-        let update_result =
-          await sql.query`UPDATE SurveyResults SET PR_number = ${pr_number}, value_detected = ${isCopilotUsed}, value_percentage = ${pctValue}, value_ndetected_reason = ${comment}, 	completed_at = ${context.payload.issue.updated_at} WHERE issue_id = ${issue_id}`;
+        let update_result = await sql.query(update_query);
         app.log.info(update_result);
+        
       } else {
         // check if dynamic values are present in context.payload
         let enterprise_name = null;
-        let assignee_name = null;
         let organization_name = null;
         if (context.payload.enterprise) {
           enterprise_name = context.payload.enterprise.name;
         }
-        if (context.payload.issue.assignee) {
-          assignee_name = context.payload.issue.assignee.login;
+        if(context.payload.organization){
+          organization_name = context.payload.organization.login;
         }
         if(context.payload.organization){
           organization_name = context.payload.organization.login;
@@ -328,9 +407,10 @@ module.exports = (app) => {
             issue_number,
             PR_number,
             assignee_name,
-            value_detected,
-            value_percentage,
-            value_ndetected_reason,
+            is_copilot_used,
+            saving_percentage,
+            usage_frequency,
+            comment,
             created_at,
             completed_at
           )
@@ -344,6 +424,7 @@ module.exports = (app) => {
             ${assignee_name},
             ${isCopilotUsed},
             ${pctValue},
+            ${freqValue},
             ${comment},
             ${context.payload.issue.created_at},
             ${context.payload.issue.updated_at}
