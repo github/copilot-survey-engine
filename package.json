@@ -18,14 +18,14 @@
   "dependencies": {
     "@azure/ai-language-text": "^1.1.0",
     "applicationinsights": "^2.7.0",
-    "dedent": "^0.7.0",
+    "dedent": "^1.0.1",
     "mssql": "^9.1.1",
     "probot": "^12.3.1"
   },
   "devDependencies": {
     "jest": "^29.6.1",
     "nock": "^13.3.1",
-    "semver": "^7.5.2",
+    "semver": ">= 7.5.4",
     "smee-client": "^1.2.2"
   },
   "engines": {
