@@ -18,7 +18,7 @@
   "dependencies": {
     "@azure/ai-language-text": "^1.1.0",
     "applicationinsights": "^2.7.0",
-    "dedent": "^1.0.1",
+    "dedent": "^1.5.1",
     "mssql": "^9.1.1",
     "probot": "^12.3.1"
   },
