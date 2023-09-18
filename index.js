@@ -29,6 +29,7 @@ module.exports = (app) => {
     });
     let pr_number = context.payload.pull_request.number;
     let pr_body = context.payload.pull_request.body;
+    let pr_author = context.payload.pull_request.user.login;
     let result = [{ primaryLanguage: { iso6391Name: "en" } }];
 
     // check language for pr_body
@@ -80,20 +81,29 @@ module.exports = (app) => {
     // display the body for the issue
     app.log.info(fileContent);
 
-    // create an issue using fileContent as body
-    try {
-      await context.octokit.issues.create({
-        owner: context.payload.repository.owner.login,
-        repo: context.payload.repository.name,
-        title: "Copilot Usage - PR#" + pr_number.toString(),
-        body: fileContent,
-        assignee: context.payload.pull_request.user.login,
-      });
-    } catch (err) {
-      app.log.error(err);
-      appInsights.trackException({ exception: err });
+    var copilotUsers = await context.octokit.request("GET /orgs/{org}/copilot/billing/seats", {
+      org: context.payload.repository.owner.login,
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+
+    // check if copilot is enabled for the pr_author
+    if (copilotUsers.data.total_seats > 0) {
+      // create an issue using fileContent as body
+      try {
+        await context.octokit.issues.create({
+          owner: context.payload.repository.owner.login,
+          repo: context.payload.repository.name,
+          title: "Copilot Usage - PR#" + pr_number.toString(),
+          body: fileContent,
+          assignee: pr_author,
+        });
+      } catch (err) {
+        app.log.error(err);
+        appInsights.trackException({ exception: err });
+      }
     }
-  });
 
   app.on("issues.edited", async (context) => {
     if (context.payload.issue.title.startsWith("Copilot Usage - PR#")) {
