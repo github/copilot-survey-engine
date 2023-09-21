@@ -30,25 +30,27 @@ describe("My Probot app", () => {
 
   beforeEach(() => {
     nock.disableNetConnect();
+    if(LANGUAGE_API_ENDPOINT) {
     nock.enableNetConnect(LANGUAGE_API_ENDPOINT);
-    nock(LANGUAGE_API_ENDPOINT)
-    .post('/language/:analyze-text?api-version=2023-04-01')
-    .reply(200, {
-      "kind": "LanguageDetectionResults",
-      "results": {
-        "documents": [{
-          "id": "1",
-          "detectedLanguage": {
-            "name": "English",
-            "iso6391Name": "en",
-            "confidenceScore": 1.0
-          },
-          "warnings": []
-        }],
-        "errors": [],
-        "modelVersion": "2022-10-01"
-      }
-    });
+      nock(LANGUAGE_API_ENDPOINT)
+      .post('/language/:analyze-text?api-version=2023-04-01')
+      .reply(200, {
+        "kind": "LanguageDetectionResults",
+        "results": {
+          "documents": [{
+            "id": "1",
+            "detectedLanguage": {
+              "name": "English",
+              "iso6391Name": "en",
+              "confidenceScore": 1.0
+            },
+            "warnings": []
+          }],
+          "errors": [],
+          "modelVersion": "2022-10-01"
+        }
+      });
+    }
     probot = new Probot({
       appId: 123,
       privateKey,
@@ -72,7 +74,7 @@ describe("My Probot app", () => {
           issues: "write",
         },
       })
-      
+
       // Test that a issue is created
       .post("/repos/mageroni/TestRepo/issues", (body) => {
         expect(body).toMatchObject(expected_issue);
