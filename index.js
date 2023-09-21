@@ -29,7 +29,9 @@ module.exports = (app) => {
     });
     let pr_number = context.payload.pull_request.number;
     let pr_body = context.payload.pull_request.body;
-    let result = [{ primaryLanguage: { iso6391Name: "en" } }];
+    let detectedLanguage = "en";
+    let pr_author = context.payload.pull_request.user.login;
+    let organization_name = context.payload.repository.owner.login
 
     // check language for pr_body
     if (LANGUAGE_API_ENDPOINT && LANGUAGE_API_KEY) {
@@ -40,7 +42,7 @@ module.exports = (app) => {
       if (pr_body) {
         try {
           let startTime = Date.now();
-          result = await TAclient.analyze("LanguageDetection", [pr_body]);
+          let result = await TAclient.analyze("LanguageDetection", [pr_body]);
           let duration = Date.now() - startTime;
           appInsights.trackDependency({
             target: "API:Language Detection",
@@ -50,12 +52,10 @@ module.exports = (app) => {
             success: true,
             dependencyTypeName: "HTTP",
           });
-          if (
-            !["en", "es", "pt", "fr"].includes(
-              result[0].primaryLanguage.iso6391Name
-            )
-          ) {
-            result[0].primaryLanguage.iso6391Name = "en";
+          if (result.length > 0 && !result[0].error && ["en", "es", "pt", "fr"].includes(result[0].primaryLanguage.iso6391Name) ) {
+            detectedLanguage = result[0].primaryLanguage.iso6391Name;
+          }else {
+            detectedLanguage = "en";
           }
         } catch (err) {
           app.log.error(err);
@@ -67,7 +67,7 @@ module.exports = (app) => {
     // read file that aligns with detected language
     const issue_body = fs.readFileSync(
       "./issue_template/copilot-usage-" +
-        result[0].primaryLanguage.iso6391Name +
+      detectedLanguage +
         ".md",
       "utf-8"
     );
@@ -79,11 +79,11 @@ module.exports = (app) => {
 
     // display the body for the issue
     app.log.info(fileContent);
-
-    // create an issue using fileContent as body
+    
+    // create an issue using fileContent as body if pr_author is included in copilotSeats
     try {
       await context.octokit.issues.create({
-        owner: context.payload.repository.owner.login,
+        owner: organization_name,
         repo: context.payload.repository.name,
         title: "Copilot Usage - PR#" + pr_number.toString(),
         body: fileContent,
@@ -402,19 +402,19 @@ module.exports = (app) => {
             completed_at
           )
           VALUES (
-            ${enterprise_name},
-            ${organization_name},
-            ${context.payload.repository.name},
-            ${issue_id},
-            ${context.payload.issue.number},
-            ${pr_number},
-            ${assignee_name},
-            ${isCopilotUsed},
-            ${pctValue},
-            ${freqValue},
-            ${comment},
-            ${context.payload.issue.created_at},
-            ${context.payload.issue.updated_at}
+            '${enterprise_name}',
+            '${organization_name}',
+            '${context.payload.repository.name}',
+             ${issue_id},
+             ${context.payload.issue.number},
+             ${pr_number},
+            '${assignee_name}',
+             '${isCopilotUsed}',
+            '${pctValue}',
+            '${freqValue}',
+            '${comment}',
+            '${context.payload.issue.created_at}',
+            '${context.payload.issue.updated_at}'
           )`;
         let insert_result = await sql.query(insert_query);
         app.log.info(insert_result);
