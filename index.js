@@ -5,70 +5,26 @@
 
 const dedent = require("dedent");
 const fs = require("fs");
-const path = require("path");
+const parse = require("csv-parse/lib/sync");
 const sql = require("mssql");
 require("dotenv").config();
-
-const {
-  TextAnalysisClient,
-  AzureKeyCredential,
-} = require("@azure/ai-language-text");
-const { LANGUAGE_API_KEY, LANGUAGE_API_ENDPOINT, DATABASE_CONNECTION_STRING } =
-  process.env;
 
 module.exports = (app) => {
   // Your code here
   app.log.info("Yay, the app was loaded!");
 
-  let appInsights = new AppInsights();
-
   app.on("pull_request.closed", async (context) => {
-    appInsights.trackEvent({
-      name: "Pull Request Close Payload",
-      properties: context.payload,
-    });
+
     let pr_number = context.payload.pull_request.number;
-    let pr_body = context.payload.pull_request.body;
     let detectedLanguage = "en";
     let pr_author = context.payload.pull_request.user.login;
     let organization_name = context.payload.repository.owner.login
-
-    // check language for pr_body
-    if (LANGUAGE_API_ENDPOINT && LANGUAGE_API_KEY) {
-      const TAclient = new TextAnalysisClient(
-        LANGUAGE_API_ENDPOINT,
-        new AzureKeyCredential(LANGUAGE_API_KEY)
-      );
-      if (pr_body) {
-        try {
-          let startTime = Date.now();
-          let result = await TAclient.analyze("LanguageDetection", [pr_body]);
-          let duration = Date.now() - startTime;
-          appInsights.trackDependency({
-            target: "API:Language Detection",
-            name: "detect pull request description language",
-            duration: duration,
-            resultCode: 0,
-            success: true,
-            dependencyTypeName: "HTTP",
-          });
-          if (result.length > 0 && !result[0].error && ["en", "es", "pt", "fr"].includes(result[0].primaryLanguage.iso6391Name) ) {
-            detectedLanguage = result[0].primaryLanguage.iso6391Name;
-          }else {
-            detectedLanguage = "en";
-          }
-        } catch (err) {
-          app.log.error(err);
-          appInsights.trackException({ exception: err });
-        }
-      }
-    }
 
     // read file that aligns with detected language
     const issue_body = fs.readFileSync(
       "./issue_template/copilot-usage-" +
       detectedLanguage +
-        ".md",
+      ".md",
       "utf-8"
     );
 
@@ -87,31 +43,22 @@ module.exports = (app) => {
         repo: context.payload.repository.name,
         title: "Copilot Usage - PR#" + pr_number.toString(),
         body: fileContent,
-        assignee: context.payload.pull_request.user.login,
+        assignee: pr_author,
       });
     } catch (err) {
       app.log.error(err);
-      appInsights.trackException({ exception: err });
     }
   });
 
   app.on("issues.edited", async (context) => {
     if (context.payload.issue.title.startsWith("Copilot Usage - PR#")) {
-      appInsights.trackEvent({
-        name: "Issue Edited Payload",
-        properties: context.payload,
-      });
-      await GetSurveyData(context);
+      await insertIntoFile(context);
     }
   });
 
   app.on("issue_comment.created", async (context) => {
     if (context.payload.issue.title.startsWith("Copilot Usage - PR#")) {
-      appInsights.trackEvent({
-        name: "Issue Comment Created Payload",
-        properties: context.payload,
-      });
-      await GetSurveyData(context);
+      await insertIntoFile(context);
     }
   });
 
@@ -143,33 +90,11 @@ module.exports = (app) => {
 
     // if there's a comment, insert it into the DB regardless of whether the user answered the survey or not
     if (comment) {
-      let startTime = Date.now();
-      let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
-      let duration = Date.now() - startTime;
-      appInsights.trackDependency({
-        target: "DB:copilotUsage",
-        name: "insert when comment is present",
-        data: query,
-        duration: duration,
-        resultCode: 0,
-        success: true,
-        dependencyTypeName: "SQL",
-      });
+      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
     }
 
     if (isCopilotUsed) {
-      let startTime = Date.now();
-      let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
-      let duration = Date.now() - startTime;
-      appInsights.trackDependency({
-        target: "DB:copilotUsage",
-        name: "insert when Yes is selected",
-        data: query,
-        duration: duration,
-        resultCode: 0,
-        success: true,
-        dependencyTypeName: "SQL",
-      });
+      await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
 
       // loop through checkboxes and find the one that contains %
       let pctSelected = false;
@@ -185,18 +110,7 @@ module.exports = (app) => {
       }
       if (pctSelected) {
         //if percentage is selected, insert into DB
-        let startTime = Date.now();
-        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null, comment);
-        let duration = Date.now() - startTime;
-        appInsights.trackDependency({
-          target: "DB:copilotUsage",
-          name: "insert when pct is selected",
-          data: query,
-          duration: duration,
-          resultCode: 0,
-          success: true,
-          dependencyTypeName: "SQL",
-        });
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null, comment);
       }
 
       // loop through checkboxes and find the ones that do not contain % and are not Yes or No
@@ -223,18 +137,7 @@ module.exports = (app) => {
 
       if (freqSelected) {
         //if frequency is selected, insert into DB
-        let startTime = Date.now();
-        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, freqValue, comment);
-        let duration = Date.now() - startTime;
-        appInsights.trackDependency({
-          target: "DB:copilotUsage",
-          name: "insert when freq is selected",
-          data: query,
-          duration: duration,
-          resultCode: 0,
-          success: true,
-          dependencyTypeName: "SQL",
-        });
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, freqValue, comment);
       }
 
       if( pctSelected && freqSelected ){
@@ -248,7 +151,6 @@ module.exports = (app) => {
           });
         } catch (err) {
           app.log.error(err);
-          appInsights.trackException({ exception: err });
         }
       }
     } else {
@@ -261,18 +163,7 @@ module.exports = (app) => {
           );
         })
       ) {
-        let startTime = Date.now();
-        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
-        let duration = Date.now() - startTime;
-        appInsights.trackDependency({
-          target: "DB:copilotUsage",
-          name: "insert when No is selected",
-          data: query,
-          duration: duration,
-          resultCode: 0,
-          success: true,
-          dependencyTypeName: "SQL",
-        });
+        await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
 
         if (comment) {
           try {
@@ -285,149 +176,97 @@ module.exports = (app) => {
             });
           } catch (err) {
             app.log.error(err);
-            appInsights.trackException({ exception: err });
           }
         }
       }
     }
+
+    return {
+      enterprise_name: context.payload.enterprise ? context.payload.enterprise.name : '',
+      organization_name: context.payload.organization ? context.payload.organization.login : '',
+      repository_name: context.payload.repository ? context.payload.repository.name : '',
+      issue_id: context.payload.issue ? context.payload.issue.id : '',
+      issue_number: context.payload.issue ? context.payload.issue.number : '',
+      PR_number: context.payload.pull_request ? context.payload.pull_request.number : '',
+      assignee_name: context.payload.issue.assignee ? context.payload.issue.assignee.login : '',
+      is_copilot_used: isCopilotUsed ? 1 : 0,
+      saving_percentage: pctValue || '',
+      usage_frequency: freqValue || '',
+      comment: comment || '',
+      created_at: context.payload.issue ? context.payload.issue.created_at : '',
+      completed_at: context.payload.issue ? context.payload.issue.updated_at : ''
+    }
+
   }
 
-  async function insertIntoDB(
-    context,
-    issue_id,
-    pr_number,
-    isCopilotUsed,
-    pctValue,
-    freqValue,
-    comment
-  ) {
-    let conn = null;
-    try {
-      conn = await sql.connect(DATABASE_CONNECTION_STRING);
+  async function insertIntoFile(context) {
+      try {
+        // Try to get the file
+        let file = await context.octokit.repos.getContent({
+          owner: context.payload.repository.owner.login,
+          repo: context.payload.repository.name,
+          path: "results.csv",
+        });
+        // If the file exists, get its contents
+        let fileContents = Buffer.from(file.data.content, "base64").toString();
+        // If the file contents are not empty, parse the CSV
+        if (fileContents.length > 0) {
+          // parse a csv into an array
+          let result = parse(fileContents, {
+            columns: true,
+            skip_empty_lines: true,
+          });
+          app.log.info(result);
+        }
 
-      // Check if table exists
-      let tableCheckResult = await sql.query`
-      SELECT *
-      FROM INFORMATION_SCHEMA.TABLES
-      WHERE TABLE_NAME = 'SurveyResults'
-    `;
+        //check if the issue_id already exists in the array
+        let issue_id_index = result.findIndex((row) => {
+          return row.issue_id == issue_id;
+        });
 
-      if (tableCheckResult.recordset.length === 0) {
-        // Create table if it doesn't exist
-        await sql.query`
-        CREATE TABLE SurveyResults (
-          record_ID int IDENTITY(1,1),  
-          enterprise_name varchar(50),
-          organization_name varchar(50),
-          repository_name varchar(50),
-          issue_id int,
-          issue_number varchar(20),
-          PR_number varchar(20),
-          assignee_name varchar(50),
-          is_copilot_used BIT,
-          saving_percentage varchar(25),
-          usage_frequency varchar(50),
-          comment varchar(255),
-          created_at DATETIME,
-          completed_at DATETIME
-      );
-      `;
+        if(issue_id_index != -1){
+          // if the issue_id exists, update the row in the array
+          result[issue_id_index] = GetSurveyData(context);
+        }else{
+          // if the issue_id does not exist, push the row into the array
+          result.push(GetSurveyData(context));
+        }
+
+        // convert the array back into a csv
+        let csv = parse(result, { header: true });
+        // convert the csv into a string
+        let csvString = csv.join("\n");
+        // convert the string into a buffer
+        let csvBuffer = Buffer.from(csvString, "utf8");
+        // encode the buffer into base64
+        let csvEncoded = csvBuffer.toString("base64");
+
+        // commit the file to the repo
+        await context.octokit.repos.createOrUpdateFileContents({
+          owner: context.payload.repository.owner.login,
+          repo: context.payload.repository.name,
+          path: "results.csv",
+          message: 'update',
+          content: csvEncoded,
+          sha: file.data.sha,
+        });
+
+      } catch (error) {
+        // If the file does not exist, create it
+        if (error.status === 404) {
+          await context.octokit.repos.createOrUpdateFileContents({
+            owner: context.payload.repository.owner.login,
+            repo: context.payload.repository.name,
+            path: "results.csv",
+            message: 'initial commit',
+            content: 'enterprise_name, organization_name, repository_name, issue_id, issue_number, PR_number, assignee_name, is_copilot_used, saving_percentage, usage_frequency, comment, created_at, completed_at\n' + GetSurveyData(context)
+          });
+        } else {
+          // If the error is not a 404 (not found), log it
+          app.log.error(error);
+        }
       }
 
-      let result =
-        await sql.query`SELECT * FROM SurveyResults WHERE Issue_id = ${issue_id}`;
-      app.log.info("Database has been created and issue id existence has been confirmed");
-
-      // convert pctValue to string
-      if (pctValue) {
-        pctValue = pctValue.toString();
-      }
-      // convert freqValue to string
-      if (freqValue) {
-        freqValue = freqValue.toString();
-      }
-
-      let assignee_name = null;
-      if (context.payload.issue.assignee) {
-        assignee_name = context.payload.issue.assignee.login;
-      }
-
-      if (result.recordset.length > 0) {
-        // create query
-        let update_query = `UPDATE [SurveyResults] SET [is_copilot_used] = ${isCopilotUsed? 1 : 0}, [completed_at] = '${context.payload.issue.updated_at}'`;
-        if (assignee_name) {
-          update_query += `, [assignee_name] = '${assignee_name}'`;
-        }
-        if (pctValue) {
-          update_query += `, [saving_percentage] = '${pctValue}'`;
-        }
-        if (freqValue) {
-          update_query += `, [usage_frequency] = '${freqValue}'`;
-        }
-        if (comment) {
-          update_query += `, [comment] = '${comment}'`;
-        }
-        update_query += ` WHERE [issue_id] = ${issue_id}`;
-
-        // update existing record
-        let update_result = await sql.query(update_query);
-        app.log.info(update_result);
-        return update_query;
-      } else {
-        // check if dynamic values are present in context.payload
-        let enterprise_name = null;
-        let organization_name = null;
-        if (context.payload.enterprise) {
-          enterprise_name = context.payload.enterprise.name;
-        }
-        if(context.payload.organization){
-          organization_name = context.payload.organization.login;
-        }
-        if(context.payload.organization){
-          organization_name = context.payload.organization.login;
-        }
-        let insert_query = `INSERT INTO SurveyResults (
-            enterprise_name,
-            organization_name,
-            repository_name,
-            issue_id,
-            issue_number,
-            PR_number,
-            assignee_name,
-            is_copilot_used,
-            saving_percentage,
-            usage_frequency,
-            comment,
-            created_at,
-            completed_at
-          )
-          VALUES (
-            '${enterprise_name}',
-            '${organization_name}',
-            '${context.payload.repository.name}',
-             ${issue_id},
-             ${context.payload.issue.number},
-             ${pr_number},
-            '${assignee_name}',
-             '${isCopilotUsed}',
-            '${pctValue}',
-            '${freqValue}',
-            '${comment}',
-            '${context.payload.issue.created_at}',
-            '${context.payload.issue.updated_at}'
-          )`;
-        let insert_result = await sql.query(insert_query);
-        app.log.info(insert_result);
-        return insert_query;
-      }
-    } catch (err) {
-      app.log.error(err);
-      appInsights.trackException({ exception: err });
-    } finally {
-      if (conn) {
-        conn.close();
-      }
-    }
   }
 
   // For more information on building apps:
@@ -436,47 +275,3 @@ module.exports = (app) => {
   // To get your app running against GitHub, see:
   // https://probot.github.io/docs/development/
 };
-
-// Define class for app insights. If no instrumentation key is provided, then no app insights will be used.
-class AppInsights {
-  constructor() {
-    if (process.env.APPINSIGHTS_INSTRUMENTATIONKEY) {
-      this.appInsights = require("applicationinsights");
-      this.appInsights.setup().start();
-      this.appIClient = this.appInsights.defaultClient;
-    } else {
-      this.appIClient = null;
-    }
-  }
-  trackEvent(name, properties) {
-    if (this.appIClient) {
-      this.appIClient.trackEvent({ name: name, properties: properties });
-    }
-  }
-  trackDependency(
-    target,
-    name,
-    data,
-    duration,
-    resultCode,
-    success,
-    dependencyTypeName
-  ) {
-    if (this.appIClient) {
-      this.appIClient.trackDependency({
-        target: target,
-        name: name,
-        data: data,
-        duration: duration,
-        resultCode: resultCode,
-        success: success,
-        dependencyTypeName: dependencyTypeName,
-      });
-    }
-  }
-  trackException(exception) {
-    if (this.appIClient) {
-      this.appIClient.trackException({ exception: exception });
-    }
-  }
-}

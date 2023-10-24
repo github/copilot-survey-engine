@@ -20,6 +20,7 @@
     "@azure/ai-text-analytics": "^5.1.0",
     "ai-text-analytics": "^0.0.1-security",
     "applicationinsights": "^2.7.3",
+    "csv-parse": "^5.5.2",
     "dedent": "^1.5.1",
     "dotenv": "^16.3.1",
     "mssql": "^9.2.0",
