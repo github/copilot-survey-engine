@@ -57,23 +57,16 @@ Note: *If the env file does not contain a Language API Key or Endpoint, the anal
 
 ### Where does the app store surveys?
 
-As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a private SQL database.
+As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a results.csv file in the same repo in which the issue was created.
 
 ## Setup. Deploy on your own environment
 
 For doing a local deployment of this GitHub App, you will need to set up an environment with the following components:
 - Web Server
-- SQL Database
-- Azure Cognitive Service for Language (optional)
-- Azure Applications Insights (optional)
 
-The web server and SQL database are the minimum requirements for this app to work and can be hosted on any environment of your choosing (cloud or on-prem). If you decide to do the deployment on Azure, this guide will help you!
+The web server is the minimum requirement for this app to work and can be hosted on any environment of your choosing (cloud or on-prem). This guide will help you on the next steps!
 
-### Step 1. Create the resources
-
-You can use this link to deploy all resources automatically in your Azure subscription [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmageroni%2Fcopilot-survey-engine%2Fmain%2Fdeployment%2Ftemplate.json)
-
-### Step 2. Execute locally and configure secrets
+### Step 1. Execute locally and configure secrets
 
 To run the application on you local machine you'll need to have installed NodeJS. Once you have it, you can access to the folder where you've cloned this project and run the following:
 
@@ -87,26 +80,15 @@ npm start
 
 As a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. If you need guidance on how to configure your first GitHub App, please review this guide https://probot.github.io/docs/development/#configuring-a-github-app.
 
-You will also need to provide the DATABASE_CONNECTION_STRING in your env file. 
-
-Optionally if you'll be also using Application Ingishts please provide the value for APPLICATIONINSIGHTS_CONNECTION_STRING. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Application Insights and copy the Connection String in the Essentials section of the Overview page. 
-
-Optionally if you'll be also using Languange detection API please provide the value for LANGUAGE_API_ENDPOINT, LANGUAGE_API_KEY. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Language and go to Keys and Endpoint. Copy one of the keys and corresponding endpoint. 
-
 ### Step 3. Deploy your App!
 
-For a quick deployment you could open your Visual Studio Code and open the cloned project. Make sure you have the Azure Tools extension installed. If not, please install it https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack
-
-Once you have the extension sign in to Azure with your credentials go to your Explorer view and right click in the file directory to select the option "Deploy to web app". Select the subscription in which you've created the resources in step 1. Select the name you chose for the App Service created in step 1. 
-
-Finally go to your GitHub App and update your webhook URL to reflect your App Service URL. 
-
+Once you have your source code deployed in the web server or hosting platform of your choosing, finally go to your GitHub App and update your webhook URL to reflect your Web Server URL. 
 
 ### Step 4. Test your App!
 
 Make sure you have your app installed in at least one repo.
 
-In such repo, create a pull request and close it (either close it or merge/complete it). Confirm that an issue has been created with the name "Copilot Usage - PR#XX". Answer the questions and confirm that the issue is closed and the data has been recorded into your database. 
+In such repo, create a pull request and close it (either close it or merge/complete it). Confirm that an issue has been created with the name "Copilot Usage - PR#XX". Answer the questions and confirm that the issue is closed and the data has been recorded into a file named results.csv 
 
 Congrats!!!!! Enjoy and keep expanding the project. 
 
