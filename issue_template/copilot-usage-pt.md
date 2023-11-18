@@ -6,9 +6,7 @@ Para o Pull Request XXX:
 - [ ] Não
 - [ ] Sim
 
-2. Em comparação com sua experiência anterior de codificação SEM usar o Copilot (este número representa 100%)
-
-***Quanto menos tempo demorou a codificação durante este PR com o Copilot?***
+2. Em comparação com sua experiência anterior de codificação SEM usar o Copilot (este número representa 100%) ***Quanto menos tempo demorou a codificação durante este PR com o Copilot?***
    
 (Exemplo: o PR normalmente levaria 5 dias, mas demorou apenas 4 dias com o Copilot, então a resposta é 20%)
 - [ ] 0%

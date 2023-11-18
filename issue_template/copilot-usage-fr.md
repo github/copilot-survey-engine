@@ -6,9 +6,7 @@ Pour le Pull Request XXX :
 - [ ] Non
 - [ ] Oui
 
-2. Par rapport à votre expérience précédente de codage SANS utiliser Copilot (ce nombre représente 100 %)
-
-***Combien de temps le codage a-t-il pris pendant ce PR avec Copilot ?***
+2. Par rapport à votre expérience précédente de codage SANS utiliser Copilot (ce nombre représente 100 %) ***Combien de temps le codage a-t-il pris pendant ce PR avec Copilot ?***
    
 (Exemple : le PR prendrait normalement 5 jours, mais n'a pris que 4 jours avec Copilot alors la réponse est 20 %)
 - [ ] 0%

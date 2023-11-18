@@ -6,9 +6,7 @@ For Pull Request XXX:
 - [ ] No
 - [ ] Yes
 
-2. Compared to your previous experience coding WITHOUT using Copilot (This number represents 100%)
-
-***How much less time did the coding take during this PR with Copilot?***
+2. Compared to your previous experience coding WITHOUT using Copilot (This number represents 100%) ***How much less time did the coding take during this PR with Copilot?***
 
 (Example: The PR would normally take 5 days, but only took 4 days with Copilot then the answer is 20%)
 - [ ] 0%
