@@ -58,11 +58,19 @@ npm start
 
 As a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. If you need guidance on how to configure your first GitHub App, please review this guide https://probot.github.io/docs/development/#configuring-a-github-app.
 
-You will also need to provide the DATABASE_CONNECTION_STRING in your env file. 
+**Be careful!** If a webhook_URL variable is created, please delete it before deploying on your environment. This should only be used for testing purposes.
+
+You will also need to provide the DATABASE_CONNECTION_STRING in your env file. Be sure to use your ODBC Connection String.
 
 Optionally if you'll be also using Application Ingishts please provide the value for APPLICATIONINSIGHTS_CONNECTION_STRING. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Application Insights and copy the Connection String in the Essentials section of the Overview page. 
 
 Optionally if you'll be also using Languange detection API please provide the value for LANGUAGE_API_ENDPOINT, LANGUAGE_API_KEY. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Language and go to Keys and Endpoint. Copy one of the keys and corresponding endpoint. 
+
+To test your code, please run the following. You should see the 3 test cases pass.
+
+```sh
+npm run test
+```
 
 ### Step 3. Deploy your App!
 
@@ -70,7 +78,7 @@ For a quick deployment you could open your Visual Studio Code and open the clone
 
 Once you have the extension sign in to Azure with your credentials go to your Explorer view and right click in the file directory to select the option "Deploy to web app". Select the subscription in which you've created the resources in step 1. Select the name you chose for the App Service created in step 1. 
 
-Finally go to your GitHub App and update your webhook URL to reflect your App Service URL. 
+Finally go to your GitHub App and update your webhook URL to reflect your App Service URL. Do not append "/probot".
 
 
 ### Step 4. Test your App!
