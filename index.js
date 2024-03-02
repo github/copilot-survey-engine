@@ -23,15 +23,21 @@ module.exports = (app) => {
   let appInsights = new AppInsights();
 
   app.on("pull_request.closed", async (context) => {
-    appInsights.trackEvent({
-      name: "Pull Request Close Payload",
-      properties: context.payload,
-    });
+
     let pr_number = context.payload.pull_request.number;
+    let pr_author = context.payload.pull_request.user.login;
+    let organization_name = context.payload.repository.owner.login;
     let pr_body = context.payload.pull_request.body;
     let detectedLanguage = "en";
-    let pr_author = context.payload.pull_request.user.login;
-    let organization_name = context.payload.repository.owner.login
+
+    appInsights.trackEvent({
+      name: "Pull Request Close Payload",
+      properties: {
+        pr_number: pr_number,
+        pr_author: pr_author,
+      
+      },
+    });
 
     // check language for pr_body
     if (LANGUAGE_API_ENDPOINT && LANGUAGE_API_KEY) {
@@ -48,7 +54,7 @@ module.exports = (app) => {
             target: "API:Language Detection",
             name: "detect pull request description language",
             duration: duration,
-            resultCode: 0,
+            resultCode: 200,
             success: true,
             dependencyTypeName: "HTTP",
           });
@@ -99,7 +105,9 @@ module.exports = (app) => {
     if (context.payload.issue.title.startsWith("Copilot Usage - PR#")) {
       appInsights.trackEvent({
         name: "Issue Edited Payload",
-        properties: context.payload,
+        properties: {
+          issue_number: context.payload.issue.number
+        },
       });
       await GetSurveyData(context);
     }
@@ -109,7 +117,10 @@ module.exports = (app) => {
     if (context.payload.issue.title.startsWith("Copilot Usage - PR#")) {
       appInsights.trackEvent({
         name: "Issue Comment Created Payload",
-        properties: context.payload,
+        properties: {
+          issue_number: context.payload.issue.number,
+          comment: context.payload.comment,
+        },
       });
       await GetSurveyData(context);
     }
@@ -144,30 +155,30 @@ module.exports = (app) => {
     // if there's a comment, insert it into the DB regardless of whether the user answered the survey or not
     if (comment) {
       let startTime = Date.now();
-      let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
+      let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
       let duration = Date.now() - startTime;
       appInsights.trackDependency({
         target: "DB:copilotUsage",
         name: "insert when comment is present",
-        data: query,
+        data: insertResult.query,
         duration: duration,
-        resultCode: 0,
-        success: true,
+        resultCode: insertResult.status ? 200 : 500,
+        success: insertResult.status,
         dependencyTypeName: "SQL",
       });
     }
 
     if (isCopilotUsed) {
       let startTime = Date.now();
-      let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
+      let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
       let duration = Date.now() - startTime;
       appInsights.trackDependency({
         target: "DB:copilotUsage",
         name: "insert when Yes is selected",
-        data: query,
+        data: insertResult.query,
         duration: duration,
-        resultCode: 0,
-        success: true,
+        resultCode: insertResult.status ? 200 : 500,
+        success: insertResult.status,
         dependencyTypeName: "SQL",
       });
 
@@ -186,15 +197,15 @@ module.exports = (app) => {
       if (pctSelected) {
         //if percentage is selected, insert into DB
         let startTime = Date.now();
-        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null, comment);
+        let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null, comment);
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
           target: "DB:copilotUsage",
           name: "insert when pct is selected",
-          data: query,
+          data: insertResult.query,
           duration: duration,
-          resultCode: 0,
-          success: true,
+          resultCode: insertResult.status ? 200 : 500,
+          success: insertResult.status,
           dependencyTypeName: "SQL",
         });
       }
@@ -224,15 +235,15 @@ module.exports = (app) => {
       if (freqSelected) {
         //if frequency is selected, insert into DB
         let startTime = Date.now();
-        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, freqValue, comment);
+        let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, freqValue, comment);
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
           target: "DB:copilotUsage",
           name: "insert when freq is selected",
-          data: query,
+          data: insertResult.query,
           duration: duration,
-          resultCode: 0,
-          success: true,
+          resultCode: insertResult.status ? 200 : 500,
+          success: insertResult.status,
           dependencyTypeName: "SQL",
         });
       }
@@ -262,15 +273,15 @@ module.exports = (app) => {
         })
       ) {
         let startTime = Date.now();
-        let query = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
+        let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
         let duration = Date.now() - startTime;
         appInsights.trackDependency({
           target: "DB:copilotUsage",
           name: "insert when No is selected",
-          data: query,
+          data: insertResult.query,
           duration: duration,
-          resultCode: 0,
-          success: true,
+          resultCode: insertResult.status ? 200 : 500,
+          success: insertResult.status,
           dependencyTypeName: "SQL",
         });
 
@@ -301,7 +312,11 @@ module.exports = (app) => {
     freqValue,
     comment
   ) {
+
     let conn = null;
+    let query = null;
+    let status = true;
+
     try {
       conn = await sql.connect(DATABASE_CONNECTION_STRING);
 
@@ -316,18 +331,18 @@ module.exports = (app) => {
         // Create table if it doesn't exist
         await sql.query`
         CREATE TABLE SurveyResults (
-          record_ID int IDENTITY(1,1),  
-          enterprise_name varchar(50),
-          organization_name varchar(50),
-          repository_name varchar(50),
-          issue_id int,
-          issue_number varchar(20),
-          PR_number varchar(20),
-          assignee_name varchar(50),
+          record_ID INT IDENTITY(1,1),  
+          enterprise_name VARCHAR(50),
+          organization_name VARCHAR(50),
+          repository_name VARCHAR(50),
+          issue_id BIGINT,
+          issue_number INT,
+          PR_number INT,
+          assignee_name VARCHAR(50),
           is_copilot_used BIT,
-          saving_percentage varchar(25),
-          usage_frequency varchar(50),
-          comment varchar(255),
+          saving_percentage VARCHAR(25),
+          usage_frequency VARCHAR(50),
+          comment VARCHAR(255),
           created_at DATETIME,
           completed_at DATETIME
       );
@@ -372,7 +387,6 @@ module.exports = (app) => {
         // update existing record
         let update_result = await sql.query(update_query);
         app.log.info(update_result);
-        return update_query;
       } else {
         // check if dynamic values are present in context.payload
         let enterprise_name = null;
@@ -409,7 +423,7 @@ module.exports = (app) => {
              ${context.payload.issue.number},
              ${pr_number},
             '${assignee_name}',
-             '${isCopilotUsed}',
+            '${isCopilotUsed}',
             '${pctValue}',
             '${freqValue}',
             '${comment}',
@@ -418,29 +432,27 @@ module.exports = (app) => {
           )`;
         let insert_result = await sql.query(insert_query);
         app.log.info(insert_result);
-        return insert_query;
       }
     } catch (err) {
       app.log.error(err);
       appInsights.trackException({ exception: err });
+      status = false;
     } finally {
       if (conn) {
         conn.close();
       }
+      return {
+        query: query,
+        status: status
+      };
+      }
     }
-  }
-
-  // For more information on building apps:
-  // https://probot.github.io/docs/
-
-  // To get your app running against GitHub, see:
-  // https://probot.github.io/docs/development/
-};
+  };
 
 // Define class for app insights. If no instrumentation key is provided, then no app insights will be used.
 class AppInsights {
   constructor() {
-    if (process.env.APPINSIGHTS_INSTRUMENTATIONKEY) {
+    if (process.env.APPLICATIONINSIGHTS_CONNECTION_STRING) {
       this.appInsights = require("applicationinsights");
       this.appInsights.setup().start();
       this.appIClient = this.appInsights.defaultClient;
@@ -448,35 +460,19 @@ class AppInsights {
       this.appIClient = null;
     }
   }
-  trackEvent(name, properties) {
+  trackEvent(event) {
     if (this.appIClient) {
-      this.appIClient.trackEvent({ name: name, properties: properties });
+      this.appIClient.trackEvent(event);
     }
   }
-  trackDependency(
-    target,
-    name,
-    data,
-    duration,
-    resultCode,
-    success,
-    dependencyTypeName
-  ) {
+  trackDependency( dependency ) {
     if (this.appIClient) {
-      this.appIClient.trackDependency({
-        target: target,
-        name: name,
-        data: data,
-        duration: duration,
-        resultCode: resultCode,
-        success: success,
-        dependencyTypeName: dependencyTypeName,
-      });
+      this.appIClient.trackDependency(dependency);
     }
   }
   trackException(exception) {
     if (this.appIClient) {
-      this.appIClient.trackException({ exception: exception });
+      this.appIClient.trackException(exception);
     }
   }
 }

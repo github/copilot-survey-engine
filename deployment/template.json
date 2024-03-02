@@ -367,7 +367,8 @@
             "location": "[variables('resourceGroup_location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_ASP_name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet')]"
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_vnet_name'), 'AppServiceSnet')]",
+                "[resourceId('microsoft.insights/components', parameters('components_insight_name'))]"
             ],
             "kind": "app,linux",
             "properties": {
@@ -376,7 +377,13 @@
                 "siteConfig": {
                     "numberOfWorkers": 1,
                     "linuxFxVersion": "NODE|18-lts",
-                    "alwaysOn": true
+                    "alwaysOn": true,
+                    "appSettings": [
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components', parameters('components_insight_name'))).InstrumentationKey]"
+                        }
+                    ]
                 },
                 "httpsOnly": true,
                 "redundancyMode": "None",
@@ -398,5 +405,11 @@
                 "isSwift": true
             }
         }
-    ]
+    ],
+    "outputs": {
+        "appInsightsInstrumentationKey": {
+            "type": "string",
+            "value": "[reference(resourceId('microsoft.insights/components', parameters('components_insight_name'))).InstrumentationKey]"
+        }
+    }
 }
