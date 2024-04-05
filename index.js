@@ -13,7 +13,7 @@ const {
   TextAnalysisClient,
   AzureKeyCredential,
 } = require("@azure/ai-language-text");
-const { LANGUAGE_API_KEY, LANGUAGE_API_ENDPOINT, DATABASE_CONNECTION_STRING } =
+const { LANGUAGE_API_KEY, LANGUAGE_API_ENDPOINT, DATABASE_CONNECTION_STRING, VALIDATE_SEAT_ASSIGNMENT, APPLICATIONINSIGHTS_CONNECTION_STRING } =
   process.env;
 
 module.exports = (app) => {
@@ -86,18 +86,31 @@ module.exports = (app) => {
     // display the body for the issue
     app.log.info(fileContent);
     
-    // create an issue using fileContent as body if pr_author is included in copilotSeats
-    try {
-      await context.octokit.issues.create({
-        owner: organization_name,
-        repo: context.payload.repository.name,
-        title: "Copilot Usage - PR#" + pr_number.toString(),
-        body: fileContent,
-        assignee: context.payload.pull_request.user.login,
-      });
-    } catch (err) {
-      app.log.error(err);
-      appInsights.trackException({ exception: err });
+    // create an issue using fileContent as body if pr_author is included in copilotSeats using Copilot Seat Billing api
+    let copilotSeats = await context.octokit.request(
+      "GET /orgs/{org}/copilot/billing/seats",
+      {
+        org: organization_name,
+        headers: {
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      }
+    );
+    let copilotSeatUsers = copilotSeats.data.seats;
+
+    if ( (Boolean(VALIDATE_SEAT_ASSIGNMENT) && copilotSeatUsers.some(user => user.assignee.login == pr_author)) || !Boolean(VALIDATE_SEAT_ASSIGNMENT)) {
+      try {
+        await context.octokit.issues.create({
+          owner: organization_name,
+          repo: context.payload.repository.name,
+          title: "Copilot Usage - PR#" + pr_number.toString(),
+          body: fileContent,
+          assignee: context.payload.pull_request.user.login,
+        });
+      } catch (err) {
+        app.log.error(err);
+        appInsights.trackException({ exception: err });
+      }
     }
   });
 
@@ -452,7 +465,7 @@ module.exports = (app) => {
 // Define class for app insights. If no instrumentation key is provided, then no app insights will be used.
 class AppInsights {
   constructor() {
-    if (process.env.APPLICATIONINSIGHTS_CONNECTION_STRING) {
+    if (APPLICATIONINSIGHTS_CONNECTION_STRING) {
       this.appInsights = require("applicationinsights");
       this.appInsights.setup().start();
       this.appIClient = this.appInsights.defaultClient;
