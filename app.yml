@@ -76,6 +76,10 @@ default_permissions:
   # https://developer.github.com/v3/apps/permissions/#metadata-permissions
   metadata: read
 
+  # Organization permissions for "GitHub Copilot Business"
+  # https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps?apiVersion=2022-11-28#organization-permissions-for-github-copilot-business
+  organization_copilot_seat_management: write
+
   # Retrieve Pages statuses, configuration, and builds, as well as create new builds.
   # https://developer.github.com/v3/apps/permissions/#permission-on-pages
   # pages: read
