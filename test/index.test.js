@@ -81,13 +81,15 @@ describe("My Probot app", () => {
         expect(body).toMatchObject(expected_issue);
         return true;
       })
-      .reply(200)
+      .reply(200);
 
       // Mock the call to the seats billing API
-      .get("/orgs/mageroni/copilot/billing/seats")
-      .reply(200, {
-        seats: [{"assignee":{"login": "mageroni"}}]
-      });
+      if (process.env.VALIDATE_SEAT_ASSIGNMENT == 'YES') {
+        mock.get("/orgs/mageroni/copilot/billing/seats")
+        .reply(200, {
+          seats: [{"assignee":{"login": "mageroni"}}]
+        });
+      }
 
     // Receive a webhook event
     await probot.receive({ name: "pull_request", payload : payload_pr_closed });

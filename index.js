@@ -87,18 +87,21 @@ module.exports = (app) => {
     app.log.info(fileContent);
     
     // create an issue using fileContent as body if pr_author is included in copilotSeats using Copilot Seat Billing api
-    let copilotSeats = await context.octokit.request(
-      "GET /orgs/{org}/copilot/billing/seats",
-      {
-        org: organization_name,
-        headers: {
-          'X-GitHub-Api-Version': '2022-11-28'
+    let copilotSeatUsers = [];
+    if (VALIDATE_SEAT_ASSIGNMENT == "YES") {
+      let copilotSeats = await context.octokit.request(
+        "GET /orgs/{org}/copilot/billing/seats",
+        {
+          org: organization_name,
+          headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
+          }
         }
-      }
-    );
-    let copilotSeatUsers = copilotSeats.data.seats;
+      );
+      copilotSeatUsers = copilotSeats.data.seats;
+    }
 
-    if ( (Boolean(VALIDATE_SEAT_ASSIGNMENT) && copilotSeatUsers.some(user => user.assignee.login == pr_author)) || !Boolean(VALIDATE_SEAT_ASSIGNMENT)) {
+    if ( VALIDATE_SEAT_ASSIGNMENT != "YES" || (VALIDATE_SEAT_ASSIGNMENT == "YES" && copilotSeatUsers.some(user => user.assignee.login == pr_author))) {
       try {
         await context.octokit.issues.create({
           owner: organization_name,

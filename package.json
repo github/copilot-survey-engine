@@ -22,8 +22,8 @@
     "applicationinsights": "^2.7.3",
     "dedent": "^1.5.1",
     "dotenv": "^16.3.1",
-    "mssql": "^9.2.0",
-    "probot": "^12.3.1"
+    "mssql": "^11.0.1",
+    "probot": "^12.4.0"
   },
   "devDependencies": {
     "jest": "^29.6.4",
