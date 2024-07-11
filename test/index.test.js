@@ -78,13 +78,13 @@ describe("My Probot app", () => {
         },
       })
 
-      .get("/repos/mageroni/TestRepo/contents/results.csv")
+      .get("/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results")
       .reply(200, {
         "name": "results.csv",
         "path": "results.csv",
         "content": "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxjb21tZW50LGNyZWF0ZWRfYXQsY29tcGxldGVkX2F0CiwsVGVzdFJlcG8sMjAwMDA5NTYyNCwxNyw1LG1hZ2Vyb25pLDEsLCwsMjAyMy0xMS0xN1QyMzo1Mzo1MlosMjAyMy0xMS0xN1QyMzo1NDo0MloKLG1hZ2Vyb25pLFRlc3RSZXBvLDE2MzA2MzM4NzUsNjIsNDQsLDEsPiAyMSUgYnV0IDwgMzAlLEFsbCBvciBtb3N0IG9mIHRoZSB0aW1lLCwyMDIzLTAzLTE4VDIyOjAwOjM0WiwyMDIz",
         "sha": "d8a6e6d4f4f3f2f1f0",
-        "url": "https://api.github.com/repos/mageroni/TestRepo/contents/results.csv?ref=master",
+        "url": "https://api.github.com/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results",
       })
 
       .put('/repos/mageroni/TestRepo/contents/results.csv')
@@ -113,13 +113,13 @@ describe("My Probot app", () => {
         },
       })
 
-      .get("/repos/mageroni/TestRepo/contents/results.csv")
+      .get("/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results")
       .reply(200, {
         "name": "results.csv",
         "path": "results.csv",
         "sha": "d8a6e6d4f4f3f2f1f0",
         "content": "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxjb21tZW50LGNyZWF0ZWRfYXQsY29tcGxldGVkX2F0CiwsVGVzdFJlcG8sMjAwMDA5NTYyNCwxNyw1LG1hZ2Vyb25pLDEsLCwsMjAyMy0xMS0xN1QyMzo1Mzo1MlosMjAyMy0xMS0xN1QyMzo1NDo0MloKLG1hZ2Vyb25pLFRlc3RSZXBvLDE2MzA2MzM4NzUsNjIsNDQsLDEsPiAyMSUgYnV0IDwgMzAlLEFsbCBvciBtb3N0IG9mIHRoZSB0aW1lLCwyMDIzLTAzLTE4VDIyOjAwOjM0WiwyMDIz",
-        "url": "https://api.github.com/repos/mageroni/TestRepo/contents/results.csv?ref=master",
+        "url": "https://api.github.com/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results",
       })
 
       .put('/repos/mageroni/TestRepo/contents/results.csv')

@@ -19,7 +19,7 @@
     "csv-parser": "^3.0.0",
     "dedent": "^1.5.1",
     "dotenv": "^16.3.1",
-    "probot": "^12.3.1"
+    "probot": "^12.4.0"
   },
   "devDependencies": {
     "jest": "^29.6.4",

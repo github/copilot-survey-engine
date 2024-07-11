@@ -7,6 +7,7 @@ const dedent = require("dedent");
 const fs = require("fs");
 const csvParser = require("csv-parser");
 const stream = require('stream');
+const BranchName = "copilot-survey-engine-results";
 require("dotenv").config();
 
 module.exports = (app) => {
@@ -72,7 +73,7 @@ module.exports = (app) => {
     // save comment body if present
     let comment = null;
     if(context.payload.comment) {
-      comment = context.payload.comment.body;
+      comment = context.payload.comment.body.replace(/\n/g, ' ').trim();
     }
 
     // find regex [0-9]\+ in issue_body and get first result
@@ -199,6 +200,7 @@ module.exports = (app) => {
           owner: context.payload.repository.owner.login,
           repo: context.payload.repository.name,
           path: "results.csv",
+          ref: BranchName,
         });
 
         // If the file exists, get its contents
@@ -247,14 +249,16 @@ module.exports = (app) => {
 
           app.log.info("CSV String:\n" + resultString);
 
-          // commit the file to the repo
+          // Commit the file to the repo in a new branch
+          await createBranch(context);
           await context.octokit.repos.createOrUpdateFileContents({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
             path: "results.csv",
             message: 'Update results.csv',
-            content:  Buffer.from(resultString).toString('base64'),
+            content: Buffer.from(resultString).toString('base64'),
             sha: file.data.sha,
+            branch: BranchName,
           });
 
           app.log.info("File updated successfully\n " + Buffer.from(resultString).toString('base64'));
@@ -265,18 +269,61 @@ module.exports = (app) => {
         if (error.status === 404) {
           let completeData = 'enterprise_name,organization_name,repository_name,issue_id,issue_number,PR_number,assignee_name,is_copilot_used,saving_percentage,usage_frequency,comment,created_at,completed_at\n' 
                               + Object.values(fileContent).join(',');
+          await createBranch(context);
           await context.octokit.repos.createOrUpdateFileContents({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
             path: "results.csv",
             message: 'initial commit',
             content: Buffer.from(completeData).toString('base64'),
+            branch: BranchName,
           });
-        }else{
+        } else {
           app.log.error(error);
         }
       }
       
+      async function createBranch(context) {
+        // Step 1: Get reference to the default branch
+        let ref;
+        try {
+          // Try to get the 'main' branch
+          const { data: mainRef } = await context.octokit.git.getRef({
+            owner: context.payload.repository.owner.login,
+            repo: context.payload.repository.name,
+            ref: 'heads/main',
+          });
+          ref = mainRef;
+        } catch (error) {
+          // If 'main' branch does not exist, try to get the 'master' branch
+          if (error.status === 404) {
+          const { data: masterRef } = await context.octokit.git.getRef({
+            owner: context.payload.repository.owner.login,
+            repo: context.payload.repository.name,
+            ref: 'heads/master',
+          });
+          ref = masterRef;
+          } else {
+            app.log.error(error);
+          }
+        }
+
+        // Step 2: Create a new branch from the default branch
+        try {
+          await context.octokit.git.createRef({
+            owner: context.payload.repository.owner.login,
+            repo: context.payload.repository.name,
+            ref: `refs/heads/${BranchName}`,
+            sha: ref.object.sha,
+          });
+        } catch (error) {
+          if (error.status === 422) {
+            app.log.info(`Branch ${BranchName} already exists`);
+          } else {
+            app.log.error(error);
+          }
+        }
+      }
 
   }
 
