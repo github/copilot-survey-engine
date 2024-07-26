@@ -1,16 +1,11 @@
 {
     "action": "edited",
-    "changes": {
-      "body": {
-        "from": "### Encuesta sobre el uso de Copilot\n\nHey! 👋  Como parte de nuestros esfuerzos por mejorar continuamente nuestros procesos de DevOps, nos gustaría recopilar sus valiosos comentarios sobre su experiencia con Copilot para el Pull Request #37 a través de las siguientes preguntas:\n\n1. ¿Copilot ahorró tiempo o aumentó la productividad en el desarrollo de este componente?\n- [x] Si\n- [ ] No\n2. Si la respuesta 1 es Si, ¿De cuánto fue la mejora (5 %, 10 %, 20 %, 30 % o más)? \n- [ ] <5%\n- [ ] 5%-10%\n- [ ] 10%-20%\n- [ ] 20%-30%\n- [ ] >30%\n4. Si la respuesta 1 es No, Explique por qué en un comentario"
-      }
-    },
     "issue": {
       "active_lock_reason": null,
       "assignee": null,
       "assignees": [],
       "author_association": "NONE",
-      "body": "### Copilot Usage Survey\n\nFor Pull Request #44:\n\n1. ***Did you use Copilot in developing this PR? (If you select No, just answer question 5)***\n- [ ] No\n- [x] Yes\n\n2. Compared to your previous experience coding WITHOUT using Copilot (This number represents 100%)\n\n   ***How much less time did the coding take during this PR with Copilot?***\n   \n   (Example: The PR would normally take 5 days, but only took 4 days with Copilot then the answer is 20%)\n- [ ] 0%\n- [ ] > 0% but < 10%\n- [ ] > 11% but < 20%\n- [x] > 21% but < 30%\n- [ ] ≥ 31% but < 40%\n- [ ] ≥ 41%\n\n3. ***Describe your thought process for calculating (or estimating) the time saved in Question 2***\n    \n - (Please tell us in a comment)\n\n4. ***How often did you use Copilot in this PR?***\n- [x] All or most of the time\n- [ ] About Half of the time\n- [ ] Some of the time\n- [ ] Not very much\n\n5. ***What other information can you share about Copilot's ability to save you time coding?*** \n\n - (Please tell us in a comment)",
+      "body": "### Copilot Usage Survey\n\nFor Pull Request #44:\n\n1. ***Did you use Copilot in developing this PR? (If you select No, just answer question 5)***\n- [ ] No\n- [x] Yes\n\n2. Compared to your previous experience coding WITHOUT using Copilot (This number represents 100%) ***How much less time did the coding take during this PR with Copilot?***\n\n(Example: The PR would normally take 5 days, but only took 4 days with Copilot then the answer is 20%)\n- [ ] 0%\n- [ ] > 0% but < 10%\n- [x] > 11% but < 20%\n- [ ] > 21% but < 30%\n- [ ] ≥ 31% but < 40%\n- [ ] ≥ 41%\n\n3. ***Describe your thought process for calculating (or estimating) the time saved in Question 2***\n\n- (Please tell us in a comment)\n\n4. ***How often did you use Copilot in this PR?***\n- [x] All or most of the time\n- [ ] About Half of the time\n- [ ] Some of the time\n- [x] Not very much\n\n5. ***What other information can you share about Copilot's ability to save you time coding?*** \n\n- (Please tell us in a comment)\n\n6. ***Where did you invest your Copilot Time Savings?***\n- [x] Resolve vulnerabilites\n- [ ] Experiment + Learn and Wellness\n- [ ] Technical debt and refactorization\n- [ ] Work on other items in the backlog\n- [ ] Other. Please explain in the comment",
       "closed_at": "2023-03-19T01:12:10Z",
       "comments": 0,
       "comments_url": "https://api.github.com/repos/mageroni/TestRepo/issues/62/comments",
@@ -41,7 +36,7 @@
       "state": "closed",
       "state_reason": "completed",
       "timeline_url": "https://api.github.com/repos/mageroni/TestRepo/issues/62/timeline",
-      "title": "Copilot Usage - PR#37",
+      "title": "Copilot Usage - PR#44",
       "updated_at": "2023-03-19T03:39:06Z",
       "url": "https://api.github.com/repos/mageroni/TestRepo/issues/62",
       "user": {

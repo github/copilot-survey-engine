@@ -53,8 +53,7 @@ describe("My Probot app", () => {
           issues: "write",
         },
       })
-
-      // Test that a issue is created
+      // Test that an issue is created
       .post("/repos/mageroni/TestRepo/issues", (body) => {
         expect(body).toMatchObject(expected_issue);
         return true;
@@ -67,7 +66,7 @@ describe("My Probot app", () => {
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
-  test("closes an issue after it's been completed - yes and percentage are added", async () => {
+  test("closes an issue after it's been completed", async () => {
     const mock = nock("https://api.github.com")
       // Test that we correctly return a test token
       .post("/app/installations/35217443/access_tokens")
@@ -82,10 +81,20 @@ describe("My Probot app", () => {
       .reply(200, {
         "name": "results.csv",
         "path": "results.csv",
-        "content": "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxjb21tZW50LGNyZWF0ZWRfYXQsY29tcGxldGVkX2F0CiwsVGVzdFJlcG8sMjAwMDA5NTYyNCwxNyw1LG1hZ2Vyb25pLDEsLCwsMjAyMy0xMS0xN1QyMzo1Mzo1MlosMjAyMy0xMS0xN1QyMzo1NDo0MloKLG1hZ2Vyb25pLFRlc3RSZXBvLDE2MzA2MzM4NzUsNjIsNDQsLDEsPiAyMSUgYnV0IDwgMzAlLEFsbCBvciBtb3N0IG9mIHRoZSB0aW1lLCwyMDIzLTAzLTE4VDIyOjAwOjM0WiwyMDIz",
+        "content": "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxzYXZpbmdzX2ludmVzdGVkLGNvbW1lbnQsY3JlYXRlZF9hdCxjb21wbGV0ZWRfYXQKLCxUZXN0UmVwbywyMDAwMDk1NjI0LDE3LDUsbWFnZXJvbmksMSwsLCwyMDIzLTExLTE3VDIzOjUzOjUyWiwyMDIzLTExLTE3VDIzOjU0OjQyWgosbWFnZXJvbmksVGVzdFJlcG8sMTYzMDYzMzg3NSw2Miw0NCwsMSw+IDIxJSBidXQgPCAzMCUsQWxsIG9yIG1vc3Qgb2YgdGhlIHRpbWUsRXhwZXJpbWVudCArIExlYXJuIGFuZCBXZWxsbmVzcywsMjAyMy0wMy0xOFQyMjowMDozNFosMjAyMy0wMy0xOVQyMjowMDozNFo=",
         "sha": "d8a6e6d4f4f3f2f1f0",
         "url": "https://api.github.com/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results",
       })
+
+      .get("/repos/mageroni/TestRepo/git/ref/heads%2Fmain")
+      .reply(200, {
+        "object": {
+          "sha": "d8a6e6d4f4f3f2f1f0"
+        }
+      })
+
+      .post('/repos/mageroni/TestRepo/git/refs')
+      .reply(200)
 
       .put('/repos/mageroni/TestRepo/contents/results.csv')
       .reply(200)
@@ -118,9 +127,19 @@ describe("My Probot app", () => {
         "name": "results.csv",
         "path": "results.csv",
         "sha": "d8a6e6d4f4f3f2f1f0",
-        "content": "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxjb21tZW50LGNyZWF0ZWRfYXQsY29tcGxldGVkX2F0CiwsVGVzdFJlcG8sMjAwMDA5NTYyNCwxNyw1LG1hZ2Vyb25pLDEsLCwsMjAyMy0xMS0xN1QyMzo1Mzo1MlosMjAyMy0xMS0xN1QyMzo1NDo0MloKLG1hZ2Vyb25pLFRlc3RSZXBvLDE2MzA2MzM4NzUsNjIsNDQsLDEsPiAyMSUgYnV0IDwgMzAlLEFsbCBvciBtb3N0IG9mIHRoZSB0aW1lLCwyMDIzLTAzLTE4VDIyOjAwOjM0WiwyMDIz",
+        "content": "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxzYXZpbmdzX2ludmVzdGVkLGNvbW1lbnQsY3JlYXRlZF9hdCxjb21wbGV0ZWRfYXQKLCxUZXN0UmVwbywyMDAwMDk1NjI0LDE3LDUsbWFnZXJvbmksMSwsLCwyMDIzLTExLTE3VDIzOjUzOjUyWiwyMDIzLTExLTE3VDIzOjU0OjQyWgosbWFnZXJvbmksVGVzdFJlcG8sMTYzMDYzMzg3NSw2Miw0NCwsMSw+IDIxJSBidXQgPCAzMCUsQWxsIG9yIG1vc3Qgb2YgdGhlIHRpbWUsRXhwZXJpbWVudCArIExlYXJuIGFuZCBXZWxsbmVzcywsMjAyMy0wMy0xOFQyMjowMDozNFosMjAyMy0wMy0xOVQyMjowMDozNFo=",
         "url": "https://api.github.com/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results",
       })
+
+      .get("/repos/mageroni/TestRepo/git/ref/heads%2Fmain")
+      .reply(200, {
+        "object": {
+          "sha": "d8a6e6d4f4f3f2f1f0"
+        }
+      })
+
+      .post('/repos/mageroni/TestRepo/git/refs')
+      .reply(200)
 
       .put('/repos/mageroni/TestRepo/contents/results.csv')
       .reply(200)
@@ -133,6 +152,50 @@ describe("My Probot app", () => {
 
     // Receive a webhook event
     await probot.receive({ name: "issue_comment", payload : issue_comment_created });
+
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test("updates results.csv record if issue id exists", async () => {
+    const initialContent = "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxzYXZpbmdzX2ludmVzdGVkLGNvbW1lbnQsY3JlYXRlZF9hdCxjb21wbGV0ZWRfYXQKLCxUZXN0UmVwbywyMDAwMDk1NjI0LDE3LDUsbWFnZXJvbmksMSwsLCwyMDIzLTExLTE3VDIzOjUzOjUyWiwyMDIzLTExLTE3VDIzOjU0OjQyWgosbWFnZXJvbmksVGVzdFJlcG8sMTYzMDYzMzg3NSw2Miw0NCwsMSw+IDIxJSBidXQgPCAzMCUsQWxsIG9yIG1vc3Qgb2YgdGhlIHRpbWUsRXhwZXJpbWVudCArIExlYXJuIGFuZCBXZWxsbmVzcywsMjAyMy0wMy0xOFQyMjowMDozNFosMjAyMy0wMy0xOVQyMjowMDozNFo=";
+    const expectedContent = "ZW50ZXJwcmlzZV9uYW1lLG9yZ2FuaXphdGlvbl9uYW1lLHJlcG9zaXRvcnlfbmFtZSxpc3N1ZV9pZCxpc3N1ZV9udW1iZXIsUFJfbnVtYmVyLGFzc2lnbmVlX25hbWUsaXNfY29waWxvdF91c2VkLHNhdmluZ19wZXJjZW50YWdlLHVzYWdlX2ZyZXF1ZW5jeSxzYXZpbmdzX2ludmVzdGVkLGNvbW1lbnQsY3JlYXRlZF9hdAosLFRlc3RSZXBvLDIwMDAwOTU2MjQsMTcsNSxtYWdlcm9uaSwxLCwsLDIwMjMtMTEtMTdUMjM6NTM6NTJaLDIwMjMtMTEtMTdUMjM6NTQ6NDJaCixtYWdlcm9uaSxUZXN0UmVwbywxNjMwNjMzODc1LDYyLDQ0LCwxLD4gMTElIGJ1dCA8IDIwJSxBbGwgb3IgbW9zdCBvZiB0aGUgdGltZSB8fCBOb3QgdmVyeSBtdWNoLFJlc29sdmUgdnVsbmVyYWJpbGl0ZXMsLDIwMjMtMDMtMThUMjI6MDA6MzRaLDIwMjMtMDMtMTlUMDM6Mzk6MDZaCg==";
+    const mock = nock("https://api.github.com")
+      // Test that we correctly return a test token
+      .post("/app/installations/35217443/access_tokens")
+      .reply(200, {
+        token: "test",
+        permissions: {
+          issues: "write",
+        },
+      })
+
+      .get("/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results")
+      .reply(200, {
+        "name": "results.csv",
+        "path": "results.csv",
+        "content": initialContent,
+        "sha": "d8a6e6d4f4f3f2f1f0",
+        "url": "https://api.github.com/repos/mageroni/TestRepo/contents/results.csv?ref=copilot-survey-engine-results",
+      })
+
+      .get("/repos/mageroni/TestRepo/git/ref/heads%2Fmain")
+      .reply(200, {
+        "object": {
+          "sha": "d8a6e6d4f4f3f2f1f0"
+        }
+      })
+
+      .post('/repos/mageroni/TestRepo/git/refs')
+      .reply(200)
+
+      .put('/repos/mageroni/TestRepo/contents/results.csv', (body) => {
+        expect(body.content).toBe(expectedContent);
+        return true;
+      })
+      .reply(200);
+
+    // Receive a webhook event
+    await probot.receive({ name: "issues", payload : payload_issues_edited });
 
     expect(mock.pendingMocks()).toStrictEqual([]);
   });

@@ -65,10 +65,6 @@ module.exports = (app) => {
 
   async function GetSurveyData(context) {
     let issue_body = context.payload.issue.body;
-    let pctSelected = false;
-    let pctValue = new Array();
-    let freqSelected = false;
-    let freqValue = new Array();
 
     // save comment body if present
     let comment = null;
@@ -79,56 +75,49 @@ module.exports = (app) => {
     // find regex [0-9]\+ in issue_body and get first result
     let pr_number = issue_body.match(/[0-9]+/)[0];
 
-    // find regex \[x\] in issue_body and get complete line in an array
-    let checkboxes = issue_body.match(/\[x\].*/g);
-
-    // find if checkboxes array contains Sim o Si or Yes
-    let isCopilotUsed = checkboxes.some((checkbox) => {
+    // Get answers to first question and find if they contain affirmative answer
+    let firstQuestionResponse = await getQuestionResponse(1, 2, issue_body);
+    let isCopilotUsed = firstQuestionResponse.some((response) => {
       return (
-        checkbox.includes("Sim") ||
-        checkbox.includes("Si") ||
-        checkbox.includes("Yes") ||
-        checkbox.includes("Oui")
+        response.includes("Sim") ||
+        response.includes("Si") ||
+        response.includes("Yes") ||
+        response.includes("Oui")
       );
     });
 
-    if (isCopilotUsed) {
-      // loop through checkboxes and find the one that contains %
-      
-      for (const checkbox of checkboxes) {
-        if (checkbox.includes("%")) {
-          pctSelected = true;
-          copilotPercentage = checkbox;
-          copilotPercentage = copilotPercentage.replace(/\[x\] /g, "");
-          pctValue.push(copilotPercentage);
-          app.log.info(copilotPercentage);
-        }
-      }
+    // Get answers to second question and store in pctValue
+    let pctValue = await getQuestionResponse(2, 3, issue_body);
+    let freqValue = await getQuestionResponse(4, 5, issue_body);
+    let savingsInvestedValue = await getQuestionResponse(6, '', issue_body);
 
-      // loop through checkboxes and find the ones that do not contain % and are not Yes or No
-      for (const checkbox of checkboxes) {
-        if (
-          !checkbox.includes("%") &&
-          !checkbox.includes("Sim") &&
-          !checkbox.includes("Si") &&
-          !checkbox.includes("Yes") &&
-          !checkbox.includes("Oui") &&
-          !checkbox.includes("Não") &&
-          !checkbox.includes("No") &&
-          !checkbox.includes("Non") || 
-          checkbox.includes("Not very much")
-        ) {
-          freqSelected = true;
-          frequencyValue = checkbox;
-          frequencyValue = frequencyValue.replace(/\[x\] /g, "");
-          freqValue.push(frequencyValue);
-          app.log.info(frequencyValue);
-        }
+    if( isCopilotUsed && pctValue && freqValue && savingsInvestedValue){
+      // All questions have been answered and we can close the issue
+      app.log.info("Closing the issue");
+      try {
+        await context.octokit.issues.update({
+          owner: context.payload.repository.owner.login,
+          repo: context.payload.repository.name,
+          issue_number: context.payload.issue.number,
+          state: "closed",
+        });
+      } catch (err) {
+        app.log.error(err);
       }
-
-      if( pctSelected && freqSelected ){
-        // close the issue
+    }
+    
+    if (
+      firstQuestionResponse.some((response) => {
+        return (
+          response.includes("Não") ||
+          response.includes("No") ||
+          response.includes("Non")
+        );
+      })
+    ){
+      if (comment) {
         try {
+          // close the issue
           await context.octokit.issues.update({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
@@ -139,33 +128,8 @@ module.exports = (app) => {
           app.log.error(err);
         }
       }
-    } else {
-      if (
-        checkboxes.some((checkbox) => {
-          return (
-            checkbox.includes("Não") ||
-            checkbox.includes("No") ||
-            checkbox.includes("Non")
-          );
-        })
-      ) {
-
-        if (comment) {
-          try {
-            // close the issue
-            await context.octokit.issues.update({
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              issue_number: context.payload.issue.number,
-              state: "closed",
-            });
-          } catch (err) {
-            app.log.error(err);
-          }
-        }
-      }
     }
-
+    
     let data = {
       enterprise_name: context.payload.enterprise ? context.payload.enterprise.name : '',
       organization_name: context.payload.organization ? context.payload.organization.login : '',
@@ -175,8 +139,9 @@ module.exports = (app) => {
       PR_number: pr_number || '',
       assignee_name: context.payload.issue.assignee ? context.payload.issue.assignee.login : '',
       is_copilot_used: isCopilotUsed ? 1 : 0,
-      saving_percentage: pctValue || '',
-      usage_frequency: freqValue || '',
+      saving_percentage: pctValue ? pctValue.join(" || ") : '',
+      frequency: freqValue ? freqValue.join(" || ") : '',
+      savings_invested: savingsInvestedValue ? savingsInvestedValue.join(" || ") : '',
       comment: comment || '',
       created_at: context.payload.issue ? context.payload.issue.created_at : '',
       completed_at: context.payload.issue ? context.payload.issue.updated_at : ''
@@ -187,13 +152,13 @@ module.exports = (app) => {
   }
 
   async function insertIntoFile(context) {
-      let fileContent = "";
-      let results = [];
+      let newContent = "";
       let resultString = "";
+      let results = [];
 
       try {
 
-        fileContent = await GetSurveyData(context);
+        newContent = await GetSurveyData(context);
 
         // Try to get the file
         let file = await context.octokit.repos.getContent({
@@ -207,6 +172,7 @@ module.exports = (app) => {
         let fileContents = Buffer.from(file.data.content, "base64").toString();
         // If the file contents are not empty, parse the CSV
         if (fileContents.length > 0) {
+          app.log.info("Starting to parse the CSV file...");
           // create a readable stream
           let readableStream = new stream.Readable();
           readableStream.push(fileContents);
@@ -232,14 +198,14 @@ module.exports = (app) => {
           if(issue_id_index != -1){
             // save previous comments
             if (results[issue_id_index].comment) {
-              fileContent.comment = results[issue_id_index].comment + ' || ' + fileContent.comment;
+              newContent.comment = results[issue_id_index].comment + ' || ' + newContent.comment;
             }
 
             // if the issue_id exists, update the row in the array results
-            results[issue_id_index] = fileContent;
+            results[issue_id_index] = newContent;
           }else{
             // if the issue_id does not exist, push the row into the array
-            results.push(fileContent);
+            results.push(newContent);
           }
 
           resultString = Object.keys(results[0]).join(',') + '\n'; 
@@ -267,8 +233,8 @@ module.exports = (app) => {
       } catch (error) {
         // If the file does not exist, create it
         if (error.status === 404) {
-          let completeData = 'enterprise_name,organization_name,repository_name,issue_id,issue_number,PR_number,assignee_name,is_copilot_used,saving_percentage,usage_frequency,comment,created_at,completed_at\n' 
-                              + Object.values(fileContent).join(',');
+          let completeData = 'enterprise_name,organization_name,repository_name,issue_id,issue_number,PR_number,assignee_name,is_copilot_used,saving_percentage,usage_frequency,savings_invested,comment,created_at,completed_at\n' 
+                              + Object.values(newContent).join(',');
           await createBranch(context);
           await context.octokit.repos.createOrUpdateFileContents({
             owner: context.payload.repository.owner.login,
@@ -282,49 +248,64 @@ module.exports = (app) => {
           app.log.error(error);
         }
       }
-      
-      async function createBranch(context) {
-        // Step 1: Get reference to the default branch
-        let ref;
-        try {
-          // Try to get the 'main' branch
-          const { data: mainRef } = await context.octokit.git.getRef({
-            owner: context.payload.repository.owner.login,
-            repo: context.payload.repository.name,
-            ref: 'heads/main',
-          });
-          ref = mainRef;
-        } catch (error) {
-          // If 'main' branch does not exist, try to get the 'master' branch
-          if (error.status === 404) {
-          const { data: masterRef } = await context.octokit.git.getRef({
-            owner: context.payload.repository.owner.login,
-            repo: context.payload.repository.name,
-            ref: 'heads/master',
-          });
-          ref = masterRef;
-          } else {
-            app.log.error(error);
-          }
-        }
 
-        // Step 2: Create a new branch from the default branch
-        try {
-          await context.octokit.git.createRef({
-            owner: context.payload.repository.owner.login,
-            repo: context.payload.repository.name,
-            ref: `refs/heads/${BranchName}`,
-            sha: ref.object.sha,
-          });
-        } catch (error) {
-          if (error.status === 422) {
-            app.log.info(`Branch ${BranchName} already exists`);
-          } else {
-            app.log.error(error);
-          }
-        }
+  }
+
+  async function createBranch(context) {
+    // Step 1: Get reference to the default branch
+    let RefBranch = null;
+    try {
+      // Try to get the 'main' branch
+      RefBranch = await context.octokit.git.getRef({
+        owner: context.payload.repository.owner.login,
+        repo: context.payload.repository.name,
+        ref: 'heads/main',
+      });
+    } catch (error) {
+      // If 'main' branch does not exist, try to get the 'master' branch
+      if (error.status === 404) {
+        RefBranch = await context.octokit.git.getRef({
+          owner: context.payload.repository.owner.login,
+          repo: context.payload.repository.name,
+          ref: 'heads/master',
+        });
+      } else {
+        app.log.error(error);
       }
+    }
 
+    // Step 2: Create a new branch from the default branch
+    try {
+      await context.octokit.git.createRef({
+        owner: context.payload.repository.owner.login,
+        repo: context.payload.repository.name,
+        ref: `refs/heads/${BranchName}`,
+        sha: RefBranch.data.object.sha,
+      });
+    } catch (error) {
+      if (error.status === 422) {
+        app.log.info(`Branch ${BranchName} already exists`);
+      } else {
+        app.log.error(error);
+      }
+    }
+  }
+
+  async function getQuestionResponse(start, end, issue_body) {
+    app.log.info("Getting answers for question " + start + " to " + end);
+    let AnswerSelected = false;
+    let Answers = new Array();
+    let Expression = end ? new RegExp(start + "\\. (.*" + end + "\\." + ")?", "s") : new RegExp(start + "\\. (.*" + ")?", "s");
+    let QuestionOptions = issue_body.match(Expression)[0].match(/\[x\].*/g);
+    if(QuestionOptions){
+      AnswerSelected = true;
+      QuestionOptions.forEach((option) => {
+        let cleanAnswer = option;
+        cleanAnswer = cleanAnswer.replace(/\[x\] /g, "");
+        Answers.push(cleanAnswer);
+      });
+    }
+    return AnswerSelected ? Answers : null;
   }
 
   // For more information on building apps:

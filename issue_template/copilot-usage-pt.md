@@ -23,9 +23,16 @@ Para o Pull Request XXX:
 4. ***Com que frequência você usou o Copilot neste PR?***
 - [ ] Todo ou a maior parte do tempo
 - [ ] Cerca de metade das vezes
-- [] Algumas vezes
+- [ ] Algumas vezes
 - [ ] Não muito
 
 5. ***Que outras informações você pode compartilhar sobre a capacidade do Copilot de economizar seu tempo de codificação?***
 
 - (Por favor, conte-nos em um comentário)
+
+6. ***Quanto você investiu do tempo que ganhou com o Copilot?***
+- [ ] Resolver vulnerabilidades
+- [ ] Experiência + Aprendizagem e Bem-estar
+- [ ] Reduzir dívida técnica e/ou refatoração
+- [ ] Trabalhar em outras tarefas do backlog 
+- [ ] Outros. Por favor, explique no comentário

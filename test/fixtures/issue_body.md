@@ -29,3 +29,10 @@ For Pull Request #44:
 5. ***What other information can you share about Copilot's ability to save you time coding?*** 
 
 - (Please tell us in a comment)
+
+6. ***Where did you invest your Copilot Time Savings?***
+- [ ] Resolve vulnerabilites
+- [ ] Experiment + Learn and Wellness
+- [ ] Technical debt and refactorization
+- [ ] Work on other items in the backlog
+- [ ] Other. Please explain in the comment

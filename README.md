@@ -6,9 +6,9 @@
 
 As more companies adopt GitHub Copilot, it becomes increasingly important to measure the benefits it brings to the organization. This survey is an effort to combine both quantitative and qualitative data. To improve validity of the quantitative responses, Developers are asked to document their rationale for the time-savings percentage they choose. 
 
-Quantitative feedback from the Developer at the time of creating a PR provides valuable insights on the time savings experienced by the Developer. Time savings is needed first before other downstream impacts (like velocity increases, or other improvements can happen. The level of granularity provides multiple feedback opportunities for Developers and can capture a variety of PRs so we can understand adoption challenges and improvement opportunities. If helpful, the Survey results may also be combined with Key Performance Indicators (KPIs) that the product provides to further contextualize the survey responses.
+Quantitative feedback from the Developer at the time of creating a PR provides valuable insights on the time savings experienced by the Developer. Time savings is needed first before other downstream impacts like velocity increases, or other improvements can happen. The level of granularity provides multiple feedback opportunities for Developers and can capture a variety of PRs so we can understand adoption challenges and improvement opportunities. If helpful, the Survey results may also be combined with Key Performance Indicators (KPIs) that the product provides to further contextualize the survey responses.
 
-The survey responses are stored in your private Azure SQL database to provide insights into how developers are using the tool, the value they report, and the challenges they encounter.
+The survey responses are stored in a file called results.csv in a new branch "copilot-survey-engine-results" to provide insights into how developers are using the tool, the value they report, and the challenges they encounter.
 
 We hope that this project provides value to your organization, and we encourage you to contribute and build upon it. Your contributions can help further enhance the survey capabilities and provide even greater insights into the developer experience with Copilot.
 
@@ -54,6 +54,13 @@ Note: *If the env file does not contain a Language API Key or Endpoint, the anal
 5. ***What other information can you share about Copilot's ability to save you time coding?*** 
 
  - [ replace this line with your answer. ]
+
+6. ***Where did you invest your Copilot Time Savings?***
+- [ ] Resolve vulnerabilites
+- [ ] Experiment, Learn and Wellness
+- [ ] Technical debt and refactorization
+- [ ] Work on other items in the backlog
+- [ ] Other. Please explain in the comment
 
 ### Where does the app store surveys?
 

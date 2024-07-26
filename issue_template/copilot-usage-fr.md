@@ -29,3 +29,10 @@ Pour le Pull Request XXX :
 5. ***Quelles autres informations pouvez-vous partager sur la capacité de Copilot à vous faire gagner du temps en matière de codage ?***
 
 - (Merci de nous le dire dans un commentaire)
+
+6. ***Qu'avez-vous investi dans le temps gagné avec Copilot ?***
+- [ ] Résoudre les vulnérabilités
+- [ ] Expérience + Apprendre et/ou Bien-être
+- [ ] Réduire la dette technique et/ou refactoring
+- [ ] Travailler sur d'autres tâches dans le backlog
+- [ ] Autres. Veuillez expliquer dans le commentaire
