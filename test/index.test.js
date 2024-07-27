@@ -97,7 +97,7 @@ describe("My Probot app", () => {
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
-  test("closes an issue after it's been completed - yes and percentage are added", async () => {
+  test("closes an issue after it's been completed", async () => {
     const mock = nock("https://api.github.com")
       // Test that we correctly return a test token
       .post("/app/installations/35217443/access_tokens")

@@ -6,7 +6,7 @@
 
 As more companies adopt GitHub Copilot, it becomes increasingly important to measure the benefits it brings to the organization. This survey is an effort to combine both quantitative and qualitative data. To improve validity of the quantitative responses, Developers are asked to document their rationale for the time-savings percentage they choose. 
 
-Quantitative feedback from the Developer at the time of creating a PR provides valuable insights on the time savings experienced by the Developer. Time savings is needed first before other downstream impacts (like velocity increases, or other improvements can happen. The level of granularity provides multiple feedback opportunities for Developers and can capture a variety of PRs so we can understand adoption challenges and improvement opportunities. If helpful, the Survey results may also be combined with Key Performance Indicators (KPIs) that the product provides to further contextualize the survey responses.
+Quantitative feedback from the Developer at the time of creating a PR provides valuable insights on the time savings experienced by the Developer. Time savings is needed first before other downstream impacts like velocity increases, or other improvements can happen. The level of granularity provides multiple feedback opportunities for Developers and can capture a variety of PRs so we can understand adoption challenges and improvement opportunities. If helpful, the Survey results may also be combined with Key Performance Indicators (KPIs) that the product provides to further contextualize the survey responses.
 
 The survey responses are stored in your private Azure SQL database to provide insights into how developers are using the tool, the value they report, and the challenges they encounter.
 
@@ -55,9 +55,16 @@ Note: *If the env file does not contain a Language API Key or Endpoint, the anal
 
  - [ replace this line with your answer. ]
 
+6. ***Where did you invest your Copilot Time Savings?***
+- [ ] Resolve vulnerabilites
+- [ ] Experiment, Learn and Wellness
+- [ ] Technical debt and refactorization
+- [ ] Work on other items in the backlog
+- [ ] Other. Please explain in the comment
+
 ### Where does the app store surveys?
 
-As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into a private SQL database.
+As we receive edits on the issue, the App will validate the responses received (options selected) and once all questions have been answered, the issue will be closed automatically and the responses will be saved into the configured SQL database.
 
 ## Setup. Deploy on your own environment
 
@@ -85,19 +92,31 @@ npm install
 npm start
 ```
 
+Once the service is running, you will see a listening endpoint in your terminal. Please follow the link, and you will find a screen like the following image.
+
+![Image for GitHub App Configuration Page](docs/GitHubAppConfigurationPage.png)
+
 As a first time execution probot will prompt you for creating a new GitHub App or connect it with an existing App. As you complete the requested information, a .env file will get created in your local source code and all the private information regarding your GitHub App will be automatically written there. If you need guidance on how to configure your first GitHub App, please review this guide https://probot.github.io/docs/development/#configuring-a-github-app.
 
-**Be careful!** If a webhook_URL variable is created, please delete it before deploying on your environment. This should only be used for testing purposes.
+> **Note**: Make sure to delete the `WEBHOOK_PROXY_URL` value from the env file and confirm that all details regarding the GitHub App are correct.
 
-You will also need to provide the DATABASE_CONNECTION_STRING in your env file. Be sure to use your ODBC Connection String.
+You will also need to provide the `DATABASE_CONNECTION_STRING` in your env file. Be sure to use your ODBC Connection String and substitue your password information.
 
-Optionally if you'll be also using Application Ingishts please provide the value for APPLICATIONINSIGHTS_CONNECTION_STRING. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Application Insights and copy the Connection String in the Essentials section of the Overview page. 
+![Image for Database Connection String setting in the Azure portal](docs/DabaseConnectionString.png)
 
-Optionally if you'll be also using Languange detection API please provide the value for LANGUAGE_API_ENDPOINT, LANGUAGE_API_KEY. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Language and go to Keys and Endpoint. Copy one of the keys and corresponding endpoint. 
+Optionally if you'll be also using Application Ingishts please provide the value for `APPLICATIONINSIGHTS_CONNECTION_STRING`. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Application Insights and copy the Connection String in the Essentials section of the Overview page. 
+
+![Image for Application Insigths setting in the Azure portal](docs/ApplicationInsightsSetting.png)
+
+Optionally if you'll be also using Languange detection API please provide the value for `LANGUAGE_API_ENDPOINT`, `LANGUAGE_API_KEY`. You can search for this in your Azure Portal, going to the resource group you've created previously. Select the resource of type Language and go to Keys and Endpoint. Copy one of the keys and corresponding endpoint. 
+
+![Image for Endpoint in Language Detection Service](docs/LanguageServiceEndpoint.png)
+![Image for Key in Language Detection Service](docs/LanguageServiceKeys.png)
 
 To test your code, please run the following. You should see the 3 test cases pass.
 
 ```sh
+#Run the test cases!
 npm run test
 ```
 
@@ -105,10 +124,11 @@ npm run test
 
 For a quick deployment you could open your Visual Studio Code and open the cloned project. Make sure you have the Azure Tools extension installed. If not, please install it https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack
 
-Once you have the extension sign in to Azure with your credentials go to your Explorer view and right click in the file directory to select the option "Deploy to web app". Select the subscription in which you've created the resources in step 1. Select the name you chose for the App Service created in step 1. 
+Once you have the extension sign in to Azure with your credentials go to your Explorer view and right click in the file directory to select the option `Deploy to web app`. Select the subscription in which you've created the resources in step 1. Select the name you chose for the App Service created in step 1. 
 
 Finally go to your GitHub App and update your webhook URL to reflect your App Service URL. Do not append "/probot".
 
+![Alt text](docs/GitHubAppWebhookURL.png)
 
 ### Step 4. Test your App!
 

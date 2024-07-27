@@ -6,15 +6,13 @@ Para o Pull Request XXX:
 - [ ] Não
 - [ ] Sim
 
-2. Em comparação com sua experiência anterior de codificação SEM usar o Copilot (este número representa 100%)
-
-***Quanto menos tempo demorou a codificação durante este PR com o Copilot?***
+2. Em comparação com sua experiência anterior de codificação SEM usar o Copilot (este número representa 100%) ***Quanto menos tempo demorou a codificação durante este PR com o Copilot?***
    
 (Exemplo: o PR normalmente levaria 5 dias, mas demorou apenas 4 dias com o Copilot, então a resposta é 20%)
 - [ ] 0%
 - [ ] > 0% mas < 10%
-- [ ] > 11% mas < 20%
-- [ ] > 21% mas < 30%
+- [ ] ≥ 11% mas < 20%
+- [ ] ≥ 21% mas < 30%
 - [ ] ≥ 31% mas < 40%
 - [ ] ≥ 41%
 
@@ -25,9 +23,16 @@ Para o Pull Request XXX:
 4. ***Com que frequência você usou o Copilot neste PR?***
 - [ ] Todo ou a maior parte do tempo
 - [ ] Cerca de metade das vezes
-- [] Algumas vezes
+- [ ] Algumas vezes
 - [ ] Não muito
 
 5. ***Que outras informações você pode compartilhar sobre a capacidade do Copilot de economizar seu tempo de codificação?***
 
 - (Por favor, conte-nos em um comentário)
+
+6. ***Quanto você investiu do tempo que ganhou com o Copilot?***
+- [ ] Resolver vulnerabilidades
+- [ ] Experiência, Aprendizagem e Bem-estar
+- [ ] Reduzir dívida técnica e/ou refatoração
+- [ ] Trabalhar em outras tarefas do backlog 
+- [ ] Outros. Por favor explique no comentário

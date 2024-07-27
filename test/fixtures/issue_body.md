@@ -6,15 +6,13 @@ For Pull Request #44:
 - [ ] No
 - [ ] Yes
 
-2. Compared to your previous experience coding WITHOUT using Copilot (This number represents 100%)
-
-***How much less time did the coding take during this PR with Copilot?***
+2. Compared to your previous experience coding WITHOUT using Copilot (This number represents 100%) ***How much less time did the coding take during this PR with Copilot?***
 
 (Example: The PR would normally take 5 days, but only took 4 days with Copilot then the answer is 20%)
 - [ ] 0%
 - [ ] > 0% but < 10%
-- [ ] > 11% but < 20%
-- [ ] > 21% but < 30%
+- [ ] ≥ 11% but < 20%
+- [ ] ≥ 21% but < 30%
 - [ ] ≥ 31% but < 40%
 - [ ] ≥ 41%
 
@@ -31,3 +29,10 @@ For Pull Request #44:
 5. ***What other information can you share about Copilot's ability to save you time coding?*** 
 
 - (Please tell us in a comment)
+
+6. ***Where did you invest your Copilot Time Savings?***
+- [ ] Resolve vulnerabilites
+- [ ] Experiment, Learn and Wellness
+- [ ] Technical debt and refactorization
+- [ ] Work on other items in the backlog
+- [ ] Other. Please explain in the comment

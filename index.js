@@ -125,7 +125,7 @@ module.exports = (app) => {
           issue_number: context.payload.issue.number
         },
       });
-      await GetSurveyData(context);
+      await insertIntoDB(context);
     }
   });
 
@@ -138,135 +138,65 @@ module.exports = (app) => {
           comment: context.payload.comment,
         },
       });
-      await GetSurveyData(context);
+      await insertIntoDB(context);
     }
   });
 
   async function GetSurveyData(context) {
     let issue_body = context.payload.issue.body;
-    let issue_id = context.payload.issue.id;
 
     // save comment body if present
     let comment = null;
     if(context.payload.comment) {
-      comment = context.payload.comment.body;
+      comment = context.payload.comment.body.replace(/\n/g, ' ').trim();
     }
 
     // find regex [0-9]\+ in issue_body and get first result
     let pr_number = issue_body.match(/[0-9]+/)[0];
 
-    // find regex \[x\] in issue_body and get complete line in an array
-    let checkboxes = issue_body.match(/\[x\].*/g);
-
-    // find if checkboxes array contains Sim o Si or Yes
-    let isCopilotUsed = checkboxes.some((checkbox) => {
+    // Get answers to first question and find if they contain affirmative answer
+    let firstQuestionResponse = await getQuestionResponse(1, 2, issue_body);
+    let isCopilotUsed = firstQuestionResponse.some((response) => {
       return (
-        checkbox.includes("Sim") ||
-        checkbox.includes("Si") ||
-        checkbox.includes("Yes") ||
-        checkbox.includes("Oui")
+        response.includes("Sim") ||
+        response.includes("Si") ||
+        response.includes("Yes") ||
+        response.includes("Oui")
       );
     });
 
-    // if there's a comment, insert it into the DB regardless of whether the user answered the survey or not
-    if (comment) {
-      let startTime = Date.now();
-      let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
-      let duration = Date.now() - startTime;
-      appInsights.trackDependency({
-        target: "DB:copilotUsage",
-        name: "insert when comment is present",
-        data: insertResult.query,
-        duration: duration,
-        resultCode: insertResult.status ? 200 : 500,
-        success: insertResult.status,
-        dependencyTypeName: "SQL",
-      });
+    // Get answers to second question and store in pctValue
+    let pctValue = await getQuestionResponse(2, 3, issue_body);
+    let freqValue = await getQuestionResponse(4, 5, issue_body);
+    let savingsInvestedValue = await getQuestionResponse(6, '', issue_body);
+
+    if( isCopilotUsed && pctValue && freqValue && savingsInvestedValue){
+      // All questions have been answered and we can close the issue
+      app.log.info("Closing the issue");
+      try {
+        await context.octokit.issues.update({
+          owner: context.payload.repository.owner.login,
+          repo: context.payload.repository.name,
+          issue_number: context.payload.issue.number,
+          state: "closed",
+        });
+      } catch (err) {
+        app.log.error(err);
+      }
     }
-
-    if (isCopilotUsed) {
-      let startTime = Date.now();
-      let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
-      let duration = Date.now() - startTime;
-      appInsights.trackDependency({
-        target: "DB:copilotUsage",
-        name: "insert when Yes is selected",
-        data: insertResult.query,
-        duration: duration,
-        resultCode: insertResult.status ? 200 : 500,
-        success: insertResult.status,
-        dependencyTypeName: "SQL",
-      });
-
-      // loop through checkboxes and find the one that contains %
-      let pctSelected = false;
-      let pctValue = new Array();
-      for (const checkbox of checkboxes) {
-        if (checkbox.includes("%")) {
-          pctSelected = true;
-          copilotPercentage = checkbox;
-          copilotPercentage = copilotPercentage.replace(/\[x\] /g, "");
-          pctValue.push(copilotPercentage);
-          app.log.info(copilotPercentage);
-        }
-      }
-      if (pctSelected) {
-        //if percentage is selected, insert into DB
-        let startTime = Date.now();
-        let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, pctValue, null, comment);
-        let duration = Date.now() - startTime;
-        appInsights.trackDependency({
-          target: "DB:copilotUsage",
-          name: "insert when pct is selected",
-          data: insertResult.query,
-          duration: duration,
-          resultCode: insertResult.status ? 200 : 500,
-          success: insertResult.status,
-          dependencyTypeName: "SQL",
-        });
-      }
-
-      // loop through checkboxes and find the ones that do not contain % and are not Yes or No
-      let freqSelected = false;
-      let freqValue = new Array();
-      for (const checkbox of checkboxes) {
-        if (
-          !checkbox.includes("%") &&
-          !checkbox.includes("Sim") &&
-          !checkbox.includes("Si") &&
-          !checkbox.includes("Yes") &&
-          !checkbox.includes("Oui") &&
-          !checkbox.includes("Não") &&
-          !checkbox.includes("No") &&
-          !checkbox.includes("Non")
-        ) {
-          freqSelected = true;
-          frequencyValue = checkbox;
-          frequencyValue = frequencyValue.replace(/\[x\] /g, "");
-          freqValue.push(frequencyValue);
-          app.log.info(frequencyValue);
-        }
-      }
-
-      if (freqSelected) {
-        //if frequency is selected, insert into DB
-        let startTime = Date.now();
-        let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, freqValue, comment);
-        let duration = Date.now() - startTime;
-        appInsights.trackDependency({
-          target: "DB:copilotUsage",
-          name: "insert when freq is selected",
-          data: insertResult.query,
-          duration: duration,
-          resultCode: insertResult.status ? 200 : 500,
-          success: insertResult.status,
-          dependencyTypeName: "SQL",
-        });
-      }
-
-      if( pctSelected && freqSelected ){
-        // close the issue
+    
+    if (
+      firstQuestionResponse.some((response) => {
+        return (
+          response.includes("Não") ||
+          response.includes("No") ||
+          response.includes("Non")
+        );
+      })
+    ){
+      if (comment) {
         try {
+          // close the issue
           await context.octokit.issues.update({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
@@ -275,195 +205,133 @@ module.exports = (app) => {
           });
         } catch (err) {
           app.log.error(err);
-          appInsights.trackException({ exception: err });
         }
       }
-    } else {
-      if (
-        checkboxes.some((checkbox) => {
-          return (
-            checkbox.includes("Não") ||
-            checkbox.includes("No") ||
-            checkbox.includes("Non")
-          );
-        })
-      ) {
-        let startTime = Date.now();
-        let insertResult = await insertIntoDB(context, issue_id, pr_number, isCopilotUsed, null, null, comment);
-        let duration = Date.now() - startTime;
-        appInsights.trackDependency({
-          target: "DB:copilotUsage",
-          name: "insert when No is selected",
-          data: insertResult.query,
-          duration: duration,
-          resultCode: insertResult.status ? 200 : 500,
-          success: insertResult.status,
-          dependencyTypeName: "SQL",
-        });
+    }
+    
+    let data = {
+      enterprise_name: context.payload.enterprise ? context.payload.enterprise.name : '',
+      organization_name: context.payload.organization ? context.payload.organization.login : '',
+      repository_name: context.payload.repository ? context.payload.repository.name : '',
+      issue_id: context.payload.issue ? context.payload.issue.id : '',
+      issue_number: context.payload.issue ? context.payload.issue.number : '',
+      PR_number: pr_number || '',
+      assignee_name: context.payload.issue.assignee ? context.payload.issue.assignee.login : '',
+      is_copilot_used: isCopilotUsed ? 1 : 0,
+      saving_percentage: pctValue ? pctValue.join(" || ") : '',
+      usage_frequency: freqValue ? freqValue.join(" || ") : '',
+      savings_invested: savingsInvestedValue ? savingsInvestedValue.join(" || ") : '',
+      comment: comment || '',
+      created_at: context.payload.issue ? context.payload.issue.created_at : '',
+      completed_at: context.payload.issue ? context.payload.issue.updated_at : ''
+    };
 
-        if (comment) {
-          try {
-            // close the issue
-            await context.octokit.issues.update({
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              issue_number: context.payload.issue.number,
-              state: "closed",
-            });
-          } catch (err) {
-            app.log.error(err);
-            appInsights.trackException({ exception: err });
-          }
+    return data;
+
+  }
+
+  async function insertIntoDB(context) {
+  let conn = null;
+  let query = null;
+  let status = true;
+  let newContent = null;
+
+  try {
+
+    newContent = await GetSurveyData(context);
+
+    conn = await sql.connect(DATABASE_CONNECTION_STRING);
+
+    // Check if table exists
+    let tableCheckResult = await sql.query`
+    SELECT *
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_NAME = 'SurveyResults'
+    `;
+
+    if (tableCheckResult.recordset.length === 0) {
+      // Create table if it doesn't exist
+      await sql.query`
+      CREATE TABLE SurveyResults (
+        record_ID INT IDENTITY(1,1),  
+        enterprise_name VARCHAR(50),
+        organization_name VARCHAR(50),
+        repository_name VARCHAR(50),
+        issue_id BIGINT,
+        issue_number INT,
+        PR_number INT,
+        assignee_name VARCHAR(50),
+        is_copilot_used BIT,
+        saving_percentage VARCHAR(200),
+        usage_frequency VARCHAR(200),
+        savings_invested VARCHAR(200),
+        comment VARCHAR(550),
+        created_at DATETIME,
+        completed_at DATETIME
+    );
+    `;
+    }
+
+    let result =
+      await sql.query`SELECT * FROM SurveyResults WHERE Issue_id = ${newContent.issue_id}`;
+    app.log.info("Database has been created and issue id existence has been confirmed");
+
+    if (result.recordset.length > 0) {
+      // create query
+      let update_query = `UPDATE [SurveyResults] SET [is_copilot_used] = ${newContent.is_copilot_used}`;
+
+      for (let key in newContent) {
+        if (newContent.hasOwnProperty(key) && newContent[key] !== undefined && key !== "is_copilot_used") {
+          update_query += `, [${key}] = '${newContent[key]}'`;
         }
       }
+
+      update_query += ` WHERE [issue_id] = ${newContent.issue_id}`;
+
+      // update existing record
+      let update_result = await sql.query(update_query);
+      app.log.info(update_result);
+    } else {
+      // insert new record if it doesn't exist
+      let keys = Object.keys(newContent).join(', ');
+      let values = Object.values(newContent).map(value => `'${value}'`).join(', ');
+
+      let insert_query = `INSERT INTO SurveyResults (${keys}) VALUES (${values})`;
+      let insert_result = await sql.query(insert_query);
+      app.log.info(insert_result);
+    }
+  } catch (err) {
+    app.log.error(err);
+    appInsights.trackException({ exception: err });
+    status = false;
+  } finally {
+    if (conn) {
+      conn.close();
+    }
+    return {
+      query: query,
+      status: status
+    };
     }
   }
 
-  async function insertIntoDB(
-    context,
-    issue_id,
-    pr_number,
-    isCopilotUsed,
-    pctValue,
-    freqValue,
-    comment
-  ) {
-
-    let conn = null;
-    let query = null;
-    let status = true;
-
-    try {
-      conn = await sql.connect(DATABASE_CONNECTION_STRING);
-
-      // Check if table exists
-      let tableCheckResult = await sql.query`
-      SELECT *
-      FROM INFORMATION_SCHEMA.TABLES
-      WHERE TABLE_NAME = 'SurveyResults'
-    `;
-
-      if (tableCheckResult.recordset.length === 0) {
-        // Create table if it doesn't exist
-        await sql.query`
-        CREATE TABLE SurveyResults (
-          record_ID INT IDENTITY(1,1),  
-          enterprise_name VARCHAR(50),
-          organization_name VARCHAR(50),
-          repository_name VARCHAR(50),
-          issue_id BIGINT,
-          issue_number INT,
-          PR_number INT,
-          assignee_name VARCHAR(50),
-          is_copilot_used BIT,
-          saving_percentage VARCHAR(25),
-          usage_frequency VARCHAR(50),
-          comment VARCHAR(255),
-          created_at DATETIME,
-          completed_at DATETIME
-      );
-      `;
-      }
-
-      let result =
-        await sql.query`SELECT * FROM SurveyResults WHERE Issue_id = ${issue_id}`;
-      app.log.info("Database has been created and issue id existence has been confirmed");
-
-      // convert pctValue to string
-      if (pctValue) {
-        pctValue = pctValue.toString();
-      }
-      // convert freqValue to string
-      if (freqValue) {
-        freqValue = freqValue.toString();
-      }
-
-      let assignee_name = null;
-      if (context.payload.issue.assignee) {
-        assignee_name = context.payload.issue.assignee.login;
-      }
-
-      if (result.recordset.length > 0) {
-        // create query
-        let update_query = `UPDATE [SurveyResults] SET [is_copilot_used] = ${isCopilotUsed? 1 : 0}, [completed_at] = '${context.payload.issue.updated_at}'`;
-        if (assignee_name) {
-          update_query += `, [assignee_name] = '${assignee_name}'`;
-        }
-        if (pctValue) {
-          update_query += `, [saving_percentage] = '${pctValue}'`;
-        }
-        if (freqValue) {
-          update_query += `, [usage_frequency] = '${freqValue}'`;
-        }
-        if (comment) {
-          update_query += `, [comment] = '${comment}'`;
-        }
-        update_query += ` WHERE [issue_id] = ${issue_id}`;
-
-        // update existing record
-        let update_result = await sql.query(update_query);
-        app.log.info(update_result);
-      } else {
-        // check if dynamic values are present in context.payload
-        let enterprise_name = null;
-        let organization_name = null;
-        if (context.payload.enterprise) {
-          enterprise_name = context.payload.enterprise.name;
-        }
-        if(context.payload.organization){
-          organization_name = context.payload.organization.login;
-        }
-        if(context.payload.organization){
-          organization_name = context.payload.organization.login;
-        }
-        let insert_query = `INSERT INTO SurveyResults (
-            enterprise_name,
-            organization_name,
-            repository_name,
-            issue_id,
-            issue_number,
-            PR_number,
-            assignee_name,
-            is_copilot_used,
-            saving_percentage,
-            usage_frequency,
-            comment,
-            created_at,
-            completed_at
-          )
-          VALUES (
-            '${enterprise_name}',
-            '${organization_name}',
-            '${context.payload.repository.name}',
-             ${issue_id},
-             ${context.payload.issue.number},
-             ${pr_number},
-            '${assignee_name}',
-            '${isCopilotUsed}',
-            '${pctValue}',
-            '${freqValue}',
-            '${comment}',
-            '${context.payload.issue.created_at}',
-            '${context.payload.issue.updated_at}'
-          )`;
-        let insert_result = await sql.query(insert_query);
-        app.log.info(insert_result);
-      }
-    } catch (err) {
-      app.log.error(err);
-      appInsights.trackException({ exception: err });
-      status = false;
-    } finally {
-      if (conn) {
-        conn.close();
-      }
-      return {
-        query: query,
-        status: status
-      };
-      }
+  async function getQuestionResponse(start, end, issue_body) {
+    app.log.info("Getting answers for question " + start + " to " + end);
+    let AnswerSelected = false;
+    let Answers = new Array();
+    let Expression = end ? new RegExp(start + "\\. (.*" + end + "\\." + ")?", "s") : new RegExp(start + "\\. (.*" + ")?", "s");
+    let QuestionOptions = issue_body.match(Expression)[0].match(/\[x\].*/g);
+    if(QuestionOptions){
+      AnswerSelected = true;
+      QuestionOptions.forEach((option) => {
+        let cleanAnswer = option;
+        cleanAnswer = cleanAnswer.replace(/\[x\] /g, "");
+        Answers.push(cleanAnswer);
+      });
     }
-  };
+    return AnswerSelected ? Answers : null;
+  }
+};
 
 // Define class for app insights. If no instrumentation key is provided, then no app insights will be used.
 class AppInsights {
