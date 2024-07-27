@@ -19,7 +19,7 @@ module.exports = (app) => {
     let pr_number = context.payload.pull_request.number;
     let pr_author = context.payload.pull_request.user.login;
     let organization_name = context.payload.repository.owner.login;
-    let detectedLanguage = "en";
+    let detectedLanguage = process.env.BOT_LANGUAGE ? process.env.BOT_LANGUAGE : "en";
 
     // read file that aligns with detected language
     const issue_body = fs.readFileSync(

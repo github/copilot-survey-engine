@@ -2,7 +2,7 @@
 
 Para el Pull Request XXX:
 
-1. *** ¿Utilizó Copilot para desarrollar este PR? (Si selecciona No, simplemente responda la pregunta 5)***
+1. ***¿Utilizó Copilot para desarrollar este PR? (Si selecciona No, simplemente responda la pregunta 5)***
 - [ ] No
 - [ ] Si
 
@@ -11,8 +11,8 @@ Para el Pull Request XXX:
 (Ejemplo: el PR normalmente tomaría 5 días, pero solo tomó 4 días con Copilot, entonces la respuesta es 20%)
 - [ ] 0%
 - [ ] > 0% pero < 10%
-- [ ] > 11% pero < 20%
-- [ ] > 21% pero < 30%
+- [ ] ≥ 11% pero < 20%
+- [ ] ≥ 21% pero < 30%
 - [ ] ≥ 31% pero < 40%
 - [ ] ≥ 41%
 
@@ -22,7 +22,7 @@ Para el Pull Request XXX:
 
 4. ***¿Con qué frecuencia usaste Copilot en este PR?***
 - [ ] Todo o la mayor parte del tiempo
-- [] Aproximadamente la mitad del tiempo
+- [ ] Aproximadamente la mitad del tiempo
 - [ ] Algo de tiempo
 - [ ] No mucho
 

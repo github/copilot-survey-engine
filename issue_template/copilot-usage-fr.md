@@ -11,8 +11,8 @@ Pour le Pull Request XXX :
 (Exemple : le PR prendrait normalement 5 jours, mais n'a pris que 4 jours avec Copilot alors la réponse est 20 %)
 - [ ] 0%
 - [ ] > 0 % mais < 10 %
-- [ ] > 11 % mais < 20 %
-- [ ] > 21 % mais < 30 %
+- [ ] ≥ 11 % mais < 20 %
+- [ ] ≥ 21 % mais < 30 %
 - [ ] ≥ 31 % mais < 40 %
 - [ ] ≥ 41%
 
