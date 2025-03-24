@@ -27,12 +27,12 @@
   },
   "devDependencies": {
     "jest": "^29.6.4",
-    "nock": "^13.3.3",
+    "nock": "^14.0.0-beta.5",
     "semver": ">= 7.5.4",
-    "smee-client": "^1.2.2"
+    "smee-client": "^2.0.0"
   },
   "engines": {
-    "node": ">= 10.13.0"
+    "node": ">= 18"
   },
   "jest": {
     "testEnvironment": "node"
