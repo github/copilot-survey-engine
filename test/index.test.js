@@ -1,16 +1,47 @@
-const nock = require("nock");
-// Requiring our app implementation
-const myProbotApp = require("..");
-const { Probot, ProbotOctokit } = require("probot");
+import nock from "nock";
+import { Probot, ProbotOctokit } from "probot";
 // Requiring our fixtures
-const payload_pr_closed = require("./fixtures/pull_request.closed.json");
-const payload_issues_edited = require("./fixtures/issues.edited.json");
-const issue_comment_created = require("./fixtures/issue_comment.created.json");
-const fs = require("fs");
-const path = require("path");
+import { createRequire } from "module";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
+import { jest } from "@jest/globals";
+
+// Mock modules before importing the app (ESM-compatible mocking)
+jest.unstable_mockModule("applicationinsights", () => ({
+  default: {
+    setup: jest.fn().mockReturnThis(),
+    start: jest.fn().mockReturnThis(),
+    defaultClient: {
+      trackEvent: jest.fn(),
+      trackDependency: jest.fn(),
+      trackException: jest.fn(),
+    },
+  },
+}));
+
+jest.unstable_mockModule("mssql", () => ({
+  default: {
+    connect: jest.fn(),
+    query: jest.fn().mockResolvedValue({ recordset: [] }),
+    close: jest.fn(),
+  },
+}));
+
+// Dynamically import the app AFTER mocks are registered
+const { default: myProbotApp } = await import("..");
+
+const requireJSON = createRequire(import.meta.url);
+const payload_pr_closed = requireJSON("./fixtures/pull_request.closed.json");
+const payload_issues_edited = requireJSON("./fixtures/issues.edited.json");
+const issue_comment_created = requireJSON("./fixtures/issue_comment.created.json");
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const LANGUAGE_API_ENDPOINT = process.env.LANGUAGE_API_ENDPOINT;
 
-const issue_body = fs.readFileSync(
+const issue_body = readFileSync(
   path.join(__dirname, "fixtures/issue_body.md"),
   'utf-8'
 );
@@ -21,7 +52,7 @@ const expected_issue = {
   assignee: "mageroni"
 }
 
-const privateKey = fs.readFileSync(
+const privateKey = readFileSync(
   path.join(__dirname, "fixtures/mock-cert.pem"),
   "utf-8"
 );

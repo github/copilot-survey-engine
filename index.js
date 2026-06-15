@@ -3,20 +3,22 @@
  * @param {import('probot').Probot} app
  */
 
-const dedent = require("dedent");
-const fs = require("fs");
-const path = require("path");
-const sql = require("mssql");
-require("dotenv").config();
+import dedent from "dedent";
+import fs from "fs";
+import sql from "mssql";
+import 'dotenv/config';
 
-const {
+import {
   TextAnalysisClient,
   AzureKeyCredential,
-} = require("@azure/ai-language-text");
-const { LANGUAGE_API_KEY, LANGUAGE_API_ENDPOINT, DATABASE_CONNECTION_STRING, VALIDATE_SEAT_ASSIGNMENT, APPLICATIONINSIGHTS_CONNECTION_STRING } =
+} from "@azure/ai-language-text";
+import appInsightsModule from "applicationinsights";
+
+const {
+  LANGUAGE_API_KEY, LANGUAGE_API_ENDPOINT, DATABASE_CONNECTION_STRING, VALIDATE_SEAT_ASSIGNMENT, APPLICATIONINSIGHTS_CONNECTION_STRING } =
   process.env;
 
-module.exports = (app) => {
+export default (app) => {
   // Your code here
   app.log.info("Yay, the app was loaded!");
 
@@ -103,7 +105,7 @@ module.exports = (app) => {
 
     if ( VALIDATE_SEAT_ASSIGNMENT != "YES" || (VALIDATE_SEAT_ASSIGNMENT == "YES" && copilotSeatUsers.some(user => user.assignee.login == pr_author))) {
       try {
-        await context.octokit.issues.create({
+        await context.octokit.rest.issues.create({
           owner: organization_name,
           repo: context.payload.repository.name,
           title: "Copilot Usage - PR#" + pr_number.toString(),
@@ -174,7 +176,7 @@ module.exports = (app) => {
       // All questions have been answered and we can close the issue
       app.log.info("Closing the issue");
       try {
-        await context.octokit.issues.update({
+        await context.octokit.rest.issues.update({
           owner: context.payload.repository.owner.login,
           repo: context.payload.repository.name,
           issue_number: context.payload.issue.number,
@@ -197,7 +199,7 @@ module.exports = (app) => {
       if (comment) {
         try {
           // close the issue
-          await context.octokit.issues.update({
+          await context.octokit.rest.issues.update({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
             issue_number: context.payload.issue.number,
@@ -337,9 +339,8 @@ module.exports = (app) => {
 class AppInsights {
   constructor() {
     if (APPLICATIONINSIGHTS_CONNECTION_STRING) {
-      this.appInsights = require("applicationinsights");
-      this.appInsights.setup().start();
-      this.appIClient = this.appInsights.defaultClient;
+      appInsightsModule.setup().start();
+      this.appIClient = appInsightsModule.defaultClient;
     } else {
       this.appIClient = null;
     }

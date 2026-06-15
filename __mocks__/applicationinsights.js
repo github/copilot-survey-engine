@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     setup: jest.fn().mockReturnThis(),
     start: jest.fn().mockReturnThis(),
     defaultClient: {

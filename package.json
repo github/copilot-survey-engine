@@ -11,9 +11,10 @@
     "github",
     "probot-app"
   ],
+  "type": "module",
   "scripts": {
     "start": "probot run ./index.js",
-    "test": "jest --detectOpenHandles"
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --detectOpenHandles"
   },
   "dependencies": {
     "@azure/ai-language-text": "^1.1.0",
