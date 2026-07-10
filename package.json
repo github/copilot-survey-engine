@@ -33,6 +33,7 @@
     "smee-client": "^2.0.0"
   },
   "overrides": {
+    "@babel/core": "7.29.6",
     "@opentelemetry/core": "2.8.0",
     "js-yaml": "3.15.0",
     "protobufjs": "8.6.3",
