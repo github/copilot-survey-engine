@@ -36,7 +36,7 @@
     "@babel/core": "7.29.6",
     "@opentelemetry/core": "2.8.0",
     "js-yaml": "3.15.0",
-    "protobufjs": "8.6.3",
+    "protobufjs": "8.6.6",
     "uuid": "11.1.1"
   },
   "engines": {
