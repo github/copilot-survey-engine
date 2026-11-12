@@ -80,6 +80,17 @@ The web server and SQL database are the minimum requirements for this app to wor
 
 You can use this link to deploy all resources automatically in your Azure subscription [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmageroni%2Fcopilot-survey-engine%2Fmain%2Fdeployment%2Ftemplate.json)
 
+For deployments using `deployment/template.bicep`, configure the app's SQL credentials separately from the SQL server administrator credentials. Before starting the app, create a contained database user named `copilotSurveyApp` in the `copilotUsage` database using the password supplied as `sqlApplicationLoginPassword`. Grant that user only the permissions needed by the app:
+
+```sql
+CREATE USER [copilotSurveyApp] WITH PASSWORD = '<application-password>';
+GRANT CREATE TABLE TO [copilotSurveyApp];
+GRANT ALTER ON SCHEMA::dbo TO [copilotSurveyApp];
+GRANT SELECT, INSERT, UPDATE ON SCHEMA::dbo TO [copilotSurveyApp];
+```
+
+The app creates `SurveyResults` on first use and then reads and writes survey responses. Do not use the SQL server administrator credentials for the app connection.
+
 ### Step 2. Execute locally and configure secrets
 
 To run the application on you local machine you'll need to have installed NodeJS. Once you have it, you can access to the folder where you've cloned this project and run the following:
