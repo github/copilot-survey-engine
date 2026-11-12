@@ -202,8 +202,10 @@ describe("My Probot app", () => {
     const request = sql.Request.mock.results[0].value;
     const query = request.query.mock.calls[0][0];
     expect(query).not.toContain(injection);
-    expect(query).toContain("@value11");
-    expect(request.input).toHaveBeenCalledWith("value11", injection);
+    const [, columns, values] = query.match(/\(([^)]*)\) VALUES \(([^)]*)\)/);
+    const commentParam = values.split(", ")[columns.split(", ").indexOf("[comment]")];
+    expect(commentParam).toMatch(/^@\w+$/);
+    expect(request.input).toHaveBeenCalledWith(commentParam.slice(1), injection);
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
