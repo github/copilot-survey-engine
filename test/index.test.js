@@ -25,11 +25,16 @@ jest.unstable_mockModule("mssql", () => ({
     connect: jest.fn(),
     query: jest.fn().mockResolvedValue({ recordset: [] }),
     close: jest.fn(),
+    Request: jest.fn().mockImplementation(() => ({
+      input: jest.fn().mockReturnThis(),
+      query: jest.fn().mockResolvedValue({}),
+    })),
   },
 }));
 
 // Dynamically import the app AFTER mocks are registered
 const { default: myProbotApp } = await import("..");
+const { default: sql } = await import("mssql");
 
 const requireJSON = createRequire(import.meta.url);
 const payload_pr_closed = requireJSON("./fixtures/pull_request.closed.json");
@@ -174,7 +179,70 @@ describe("My Probot app", () => {
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
+  test("parameterizes survey data containing SQL syntax", async () => {
+    const injection = "'; DROP TABLE SurveyResults;--";
+    const payload = structuredClone(issue_comment_created);
+    payload.comment.body = injection;
+
+    const mock = nock("https://api.github.com")
+      .post("/app/installations/35217443/access_tokens")
+      .reply(200, {
+        token: "test",
+        permissions: {
+          issues: "write",
+        },
+      })
+      .patch("/repos/mageroni/TestRepo/issues/60")
+      .reply(200);
+
+    sql.Request.mockClear();
+
+    await probot.receive({ name: "issue_comment", payload });
+
+    const request = sql.Request.mock.results[0].value;
+    const query = request.query.mock.calls[0][0];
+    expect(query).not.toContain(injection);
+    const [, columns, values] = query.match(/\(([^)]*)\) VALUES \(([^)]*)\)/);
+    const commentParam = values.split(", ")[columns.split(", ").indexOf("[comment]")];
+    expect(commentParam).toMatch(/^@\w+$/);
+    expect(request.input).toHaveBeenCalledWith(commentParam.slice(1), injection);
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
+  test("parameterizes updates to existing survey data", async () => {
+    const injection = "'; DROP TABLE SurveyResults;--";
+    const payload = structuredClone(issue_comment_created);
+    payload.comment.body = injection;
+    sql.query.mockImplementation((queryParts) => ({
+      recordset: queryParts.join("").includes("SELECT * FROM SurveyResults") ? [{}] : [],
+    }));
+
+    const mock = nock("https://api.github.com")
+      .post("/app/installations/35217443/access_tokens")
+      .reply(200, {
+        token: "test",
+        permissions: {
+          issues: "write",
+        },
+      })
+      .patch("/repos/mageroni/TestRepo/issues/60")
+      .reply(200);
+
+    sql.Request.mockClear();
+
+    await probot.receive({ name: "issue_comment", payload });
+
+    const request = sql.Request.mock.results[0].value;
+    const query = request.query.mock.calls[0][0];
+    expect(query).toContain("UPDATE [SurveyResults]");
+    expect(query).not.toContain(injection);
+    expect(query).toContain("[comment] = @value10");
+    expect(request.input).toHaveBeenCalledWith("value10", injection);
+    expect(mock.pendingMocks()).toStrictEqual([]);
+  });
+
   afterEach(() => {
+    sql.query.mockReset().mockResolvedValue({ recordset: [] });
     nock.cleanAll();
     nock.enableNetConnect();
   });
