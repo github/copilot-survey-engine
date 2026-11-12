@@ -18,6 +18,23 @@ const {
   LANGUAGE_API_KEY, LANGUAGE_API_ENDPOINT, DATABASE_CONNECTION_STRING, VALIDATE_SEAT_ASSIGNMENT, APPLICATIONINSIGHTS_CONNECTION_STRING } =
   process.env;
 
+const SURVEY_COLUMNS = [
+  "enterprise_name",
+  "organization_name",
+  "repository_name",
+  "issue_id",
+  "issue_number",
+  "PR_number",
+  "assignee_name",
+  "is_copilot_used",
+  "saving_percentage",
+  "usage_frequency",
+  "savings_invested",
+  "comment",
+  "created_at",
+  "completed_at",
+];
+
 export default (app) => {
   // Your code here
   app.log.info("Yay, the app was loaded!");
@@ -279,27 +296,33 @@ export default (app) => {
     app.log.info("Database has been created and issue id existence has been confirmed");
 
     if (result.recordset.length > 0) {
-      // create query
-      let update_query = `UPDATE [SurveyResults] SET [is_copilot_used] = ${newContent.is_copilot_used}`;
-
-      for (let key in newContent) {
-        if (newContent.hasOwnProperty(key) && newContent[key] !== undefined && key !== "is_copilot_used") {
-          update_query += `, [${key}] = '${newContent[key]}'`;
-        }
-      }
-
-      update_query += ` WHERE [issue_id] = ${newContent.issue_id}`;
+      const updateColumns = SURVEY_COLUMNS.filter(
+        (column) => column !== "is_copilot_used" && newContent[column] !== undefined
+      );
+      const updateRequest = new sql.Request(conn);
+      updateRequest.input("is_copilot_used", newContent.is_copilot_used);
+      updateColumns.forEach((column, index) => {
+        updateRequest.input(`value${index}`, newContent[column]);
+      });
+      updateRequest.input("issue_id", newContent.issue_id);
+      const update_query = `UPDATE [SurveyResults] SET [is_copilot_used] = @is_copilot_used, ${updateColumns
+        .map((column, index) => `[${column}] = @value${index}`)
+        .join(", ")} WHERE [issue_id] = @issue_id`;
 
       // update existing record
-      let update_result = await sql.query(update_query);
+      let update_result = await updateRequest.query(update_query);
       app.log.info(update_result);
     } else {
       // insert new record if it doesn't exist
-      let keys = Object.keys(newContent).join(', ');
-      let values = Object.values(newContent).map(value => `'${value}'`).join(', ');
-
-      let insert_query = `INSERT INTO SurveyResults (${keys}) VALUES (${values})`;
-      let insert_result = await sql.query(insert_query);
+      const insertColumns = SURVEY_COLUMNS.filter((column) => newContent[column] !== undefined);
+      const insertRequest = new sql.Request(conn);
+      insertColumns.forEach((column, index) => {
+        insertRequest.input(`value${index}`, newContent[column]);
+      });
+      const insert_query = `INSERT INTO SurveyResults (${insertColumns
+        .map((column) => `[${column}]`)
+        .join(", ")}) VALUES (${insertColumns.map((_, index) => `@value${index}`).join(", ")})`;
+      let insert_result = await insertRequest.query(insert_query);
       app.log.info(insert_result);
     }
   } catch (err) {
