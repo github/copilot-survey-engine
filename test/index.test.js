@@ -156,6 +156,17 @@ describe("My Probot app", () => {
     expect(mock.pendingMocks()).toStrictEqual([]);
   });
 
+  test("handles edited survey bodies without PR numbers or question markers", async () => {
+    const payload = structuredClone(payload_issues_edited);
+    payload.issue.body = "This edited survey has no numbered question markers.";
+
+    sql.Request.mockClear();
+    await probot.receive({ name: "issues", payload });
+
+    const request = sql.Request.mock.results[0].value;
+    expect(request.input).toHaveBeenCalledWith("value5", "");
+  });
+
   test("closes an issue if a comment is received", async () => {
     const mock = nock("https://api.github.com")
       // Test that we correctly return a test token

@@ -171,10 +171,10 @@ export default (app) => {
     }
 
     // find regex [0-9]\+ in issue_body and get first result
-    let pr_number = issue_body.match(/[0-9]+/)[0];
+    let pr_number = issue_body?.match(/#?\s*([0-9]+)/i)?.[1] || '';
 
     // Get answers to first question and find if they contain affirmative answer
-    let firstQuestionResponse = await getQuestionResponse(1, 2, issue_body);
+    let firstQuestionResponse = (await getQuestionResponse(1, 2, issue_body)) || [];
     let isCopilotUsed = firstQuestionResponse.some((response) => {
       return (
         response.includes("Sim") ||
@@ -345,7 +345,8 @@ export default (app) => {
     let AnswerSelected = false;
     let Answers = new Array();
     let Expression = end ? new RegExp(start + "\\. (.*" + end + "\\." + ")?", "s") : new RegExp(start + "\\. (.*" + ")?", "s");
-    let QuestionOptions = issue_body.match(Expression)[0].match(/\[x\].*/g);
+    let question = issue_body?.match(Expression);
+    let QuestionOptions = question ? question[0].match(/\[x\].*/g) : null;
     if(QuestionOptions){
       AnswerSelected = true;
       QuestionOptions.forEach((option) => {
