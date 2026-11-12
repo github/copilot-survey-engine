@@ -171,7 +171,7 @@ export default (app) => {
     }
 
     // find regex [0-9]\+ in issue_body and get first result
-    let pr_number = issue_body?.match(/[0-9]+/)?.[0] || '';
+    let pr_number = issue_body?.match(/Pull Request\s+#?\s*([0-9]+)/i)?.[1] || '';
 
     // Get answers to first question and find if they contain affirmative answer
     let firstQuestionResponse = (await getQuestionResponse(1, 2, issue_body)) || [];
