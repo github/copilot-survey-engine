@@ -17,6 +17,10 @@ param sqlAdministratorLogin string
 @secure()
 param sqlAdministratorLoginPassword string
 
+@description('Password for the application-specific Azure SQL database user')
+@secure()
+param sqlApplicationLoginPassword string
+
 @description('application insights name')
 param appInsightsName string
 
@@ -310,7 +314,7 @@ resource appService 'Microsoft.Web/sites@2022-09-01' = {
         }
         {
           name: 'DATABASE_CONNECTION_STRING'
-          value: 'Server=tcp:${sqlServer.name}${environment().suffixes.sqlServerHostname},1433;Initial Catalog=copilotUsage;Persist Security Info=False;User ID=${sqlAdministratorLogin};Password=${sqlAdministratorLoginPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+          value: 'Server=tcp:${sqlServer.name}${environment().suffixes.sqlServerHostname},1433;Initial Catalog=copilotUsage;Persist Security Info=False;User ID=copilotSurveyApp;Password=${sqlApplicationLoginPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
         }
         {
           name: 'LANGUAGE_API_ENDPOINT'
